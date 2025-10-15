@@ -1,0 +1,200 @@
+﻿@model List<VotingSystem.Models.Candidate>
+@{
+    ViewBag.Title = "Admin Dashboard";
+}
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f3f3f3;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        background: #7e57c2;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+    }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .logout-button {
+        background: #fff;
+        color: #7e57c2;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background: #e0d1f5;
+            transform: translateY(-2px);
+        }
+
+    .table-container {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        min-width: 600px;
+    }
+
+    thead {
+        background: #9575cd;
+        color: white;
+    }
+
+    th, td {
+        padding: 15px 12px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    tbody tr:hover {
+        background: #f1f0f8;
+    }
+
+    .button {
+        text-decoration: none;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        margin-right: 5px;
+    }
+
+        .button.edit {
+            background: #42a5f5;
+            color: #fff;
+        }
+
+            .button.edit:hover {
+                background: #1e88e5;
+                transform: translateY(-1px);
+            }
+
+        .button.delete {
+            background: #ef5350;
+            color: #fff;
+        }
+
+            .button.delete:hover {
+                background: #e53935;
+                transform: translateY(-1px);
+            }
+
+    .add {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #7e57c2;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        .add:hover {
+            background: #5e35b1;
+            transform: translateY(-2px);
+        }
+
+    @@media (max-width: 768px) {
+        .header
+
+    {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logout-button {
+        margin-top: 10px;
+    }
+
+    table {
+        min-width: 100%;
+    }
+
+    }
+</style>
+
+<div class="header">
+    <h2>Admin Panel</h2>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">Logout</button>
+    </form>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Description</th>
+                <th>Votes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.Name</td>
+                    <td>@c.Position</td>
+                    <td>@c.Description</td>
+                    <td>@c.VoteCount</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@c.Id" class="button edit">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@c.Id" class="button delete">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <a asp-action="Create" class="add">Add New Candidate</a>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+     function testSignalR() {
+        fetch('/Admin/TestBroadcast', {
+            method: 'POST'
+        })
+        .then(() => console.log("Broadcast sent"))
+        .catch(err => console.error("Broadcast failed:", err));
+    }
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/dashboardHub")
+        .build();
+
+    connection.on("ReceiveUpdate", () => {
+        console.log("SignalR update received — refreshing dashboard");
+        window.location.reload();
+    });
+
+</script>

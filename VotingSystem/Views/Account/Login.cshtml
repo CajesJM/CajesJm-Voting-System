@@ -1,0 +1,342 @@
+﻿@model VotingSystem.Models.LoginViewModel
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.5;
+        animation: float 10s infinite ease-in-out alternate;
+    }
+
+    .shape1 {
+        width: 400px;
+        height: 400px;
+        background: #9575cd;
+        top: -120px;
+        left: -150px;
+        animation-delay: 0s;
+    }
+
+    .shape2 {
+        width: 500px;
+        height: 500px;
+        background: #7e57c2;
+        bottom: -200px;
+        right: -120px;
+        animation-delay: 2s;
+    }
+
+    .shape3 {
+        width: 350px;
+        height: 350px;
+        background: #b39ddb;
+        top: 60%;
+        left: 60%;
+        animation-delay: 1s;
+    }
+
+    @@keyframes float {
+        0%
+
+    {
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        transform: translateY(30px) scale(1.05);
+    }
+
+    }
+
+    .login-card {
+        position: relative;
+        z-index: 1;
+        background: #fff;
+        padding: 60px 45px;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 480px;
+        overflow: hidden;
+        animation: fadeIn 0.8s ease;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    }
+
+        .login-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            padding: 3px;
+            background: conic-gradient( from 0deg, #7e57c2, #b388ff, #ffffff, #9575cd, #b388ff, #7e57c2 );
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: rotateBorder 6s linear infinite;
+            z-index: -1;
+            box-shadow: 0 0 20px rgba(155, 89, 182, 0.35);
+        }
+
+    @@keyframes rotateBorder {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+        .login-header h2 {
+            color: #5e35b1;
+            font-size: 30px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+    label {
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    input[type="text"], input[type="password"] {
+        padding: 12px;
+        margin-bottom: 18px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #7e57c2;
+            box-shadow: 0 0 8px rgba(126, 87, 194, 0.4);
+            outline: none;
+        }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 8px;
+        accent-color: #7e57c2;
+    }
+
+    .notification {
+        background-color: #fbe9e7;
+        color: #c62828;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ef9a9a;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .action-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    button {
+        flex: 1;
+        padding: 12px;
+        background: #7e57c2;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        button:hover {
+            background: #5e35b1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(126, 87, 194, 0.4);
+        }
+
+    .register-link {
+        flex: 1;
+        text-align: center;
+        text-decoration: none;
+        color: #5e35b1;
+        background: #ede7f6;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        .register-link:hover {
+            background: #d1c4e9;
+            color: #4527a0;
+        }
+
+    @@media (max-width: 500px) {
+        .login-card
+
+    {
+        padding: 35px 25px;
+        width: 90%;
+    }
+
+    .action-container {
+        flex-direction: column;
+    }
+
+    .register-link, button {
+        width: 100%;
+    }
+
+    }
+
+    .dark-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #7e57c2;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+        .dark-toggle:hover {
+            background: #5e35b1;
+        }
+
+    body.dark {
+        background: radial-gradient(circle at top left, #2a1941, #3a2560);
+    }
+
+        body.dark .login-card {
+            background: #2e1f47;
+            color: #f3e5f5;
+        }
+
+        body.dark .login-header h2 {
+            color: #d1b3ff;
+        }
+
+        body.dark input, body.dark button, body.dark .register-link {
+            background: #3a2960;
+            color: #fff;
+            border-color: #6a42c2;
+        }
+
+</style>
+
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
+
+<button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
+
+<div class="login-card">
+    <div class="login-header">
+        <h2>Voting System</h2>
+        <p>Sign in to access your account</p>
+    </div>
+
+    <form asp-action="Login" method="post">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="notification">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <label asp-for="Username">Username</label>
+        <input asp-for="Username" placeholder="Enter your username" required />
+
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" type="password" id="Password" placeholder="Enter your password" required />
+
+        <div class="checkbox-container">
+            <input type="checkbox" onclick="togglePassword()" id="showPassword">
+            <label for="showPassword">Show Password</label>
+        </div>
+
+        <div class="action-container">
+            <button type="submit">Login</button>
+            <a href="/Account/Register" class="register-link">Register</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePassword() {
+            const x = document.getElementById("Password");
+            x.type = x.type === "password" ? "text" : "password";
+        }
+                function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+        }
+    </script>
+}

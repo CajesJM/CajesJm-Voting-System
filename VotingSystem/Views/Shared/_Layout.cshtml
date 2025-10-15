@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+   
+</head>
+<body>
+   <nav>
+     @* @if (User.IsInRole("Admin"))
+        {
+            <a href="/Admin/Dashboard">Admin Dashboard</a>
+        }
+        else if (User.IsInRole("User"))
+        {
+            <a href="/User/Dashboard">User Dashboard</a>
+        }
+    </nav> *@
+   
+    <div class="main-content">
+        @RenderBody()
+    </div>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>

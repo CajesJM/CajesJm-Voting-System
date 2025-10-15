@@ -1,0 +1,215 @@
+﻿@model VotingSystem.Models.Candidate
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.5;
+        animation: float 10s infinite ease-in-out alternate;
+    }
+
+    .shape1 {
+        width: 400px;
+        height: 400px;
+        background: #9575cd;
+        top: -120px;
+        left: -150px;
+    }
+
+    .shape2 {
+        width: 500px;
+        height: 500px;
+        background: #7e57c2;
+        bottom: -200px;
+        right: -120px;
+    }
+
+    .shape3 {
+        width: 350px;
+        height: 350px;
+        background: #b39ddb;
+        top: 60%;
+        left: 60%;
+    }
+
+    @@keyframes float {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+
+        100% {
+            transform: translateY(30px) scale(1.05);
+        }
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        background: #7e57c2;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+        }
+
+    .logout-button {
+        background: #fff;
+        color: #7e57c2;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background: #e0d1f5;
+            transform: translateY(-2px);
+        }
+
+    .form-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 15px;
+        box-sizing: border-box;
+    }
+
+    .form-card {
+        background: #fff;
+        padding: 50px 40px;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        animation: fadeIn 0.8s ease;
+        box-sizing: border-box;
+        text-align: center;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    h2 {
+        text-align: center;
+        color: #5e35b1;
+        font-size: 28px;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+
+    p {
+        font-size: 16px;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    button, .back-button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        margin: 0 5px;
+    }
+
+    button {
+        background: #ef5350;
+        color: #fff;
+    }
+
+        button:hover {
+            background: #e53935;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239,83,80,0.4);
+        }
+
+    .back-button {
+        background: #ccc;
+        color: #333;
+    }
+
+        .back-button:hover {
+            background: #b3b3b3;
+        }
+
+    @@media (max-width: 500px) {
+        .form-card {
+            padding: 35px 25px;
+        }
+
+        button, .back-button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+</style>
+
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
+
+<div class="header">
+    <h2>Admin Panel</h2>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">Logout</button>
+    </form>
+</div>
+
+<div class="form-container">
+    <div class="form-card">
+        <h2>Delete Candidate</h2>
+        <p>Are you sure you want to delete <strong>@Model.Name</strong> for the position <strong>@Model.Position</strong>?</p>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div class="button-container">
+                <button type="submit">Yes, Delete</button>
+                <a asp-action="Dashboard" class="back-button">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

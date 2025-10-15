@@ -1,0 +1,243 @@
+﻿@model List<VotingSystem.Models.Candidate>
+@{
+    ViewBag.Title = "User Dashboard";
+}
+
+<style>
+    /* Body and background */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* Floating background shapes */
+    .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.5;
+        animation: float 10s infinite ease-in-out alternate;
+    }
+
+    .shape1 {
+        width: 400px;
+        height: 400px;
+        background: #9575cd;
+        top: -120px;
+        left: -150px;
+    }
+
+    .shape2 {
+        width: 500px;
+        height: 500px;
+        background: #7e57c2;
+        bottom: -200px;
+        right: -120px;
+    }
+
+    .shape3 {
+        width: 350px;
+        height: 350px;
+        background: #b39ddb;
+        top: 60%;
+        left: 60%;
+    }
+
+    @@keyframes float {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+
+        100% {
+            transform: translateY(30px) scale(1.05);
+        }
+    }
+
+    /* Header */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        background: #7e57c2;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .logout-button {
+        background: #fff;
+        color: #7e57c2;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background: #e0d1f5;
+            transform: translateY(-2px);
+        }
+
+    /* Candidate cards */
+    #candidateList {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 30px 15px;
+        gap: 20px;
+        display: none; /* Hidden until loading finishes */
+    }
+
+    .candidate-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 25px 20px;
+        width: 250px;
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .candidate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .candidate-card h3 {
+            margin: 0 0 10px 0;
+            color: #5e35b1;
+            font-size: 20px;
+        }
+
+        .candidate-card p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .candidate-card button {
+            background: #42a5f5;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .candidate-card button:hover {
+                background: #1e88e5;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(30,136,229,0.4);
+            }
+
+    /* Loading */
+    #loading {
+        text-align: center;
+        font-size: 18px;
+        color: #5e35b1;
+        margin-top: 50px;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        #candidateList {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+</style>
+
+<!-- Background shapes -->
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
+
+<!-- Header -->
+<div class="header">
+    <h2>Welcome, User!</h2>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">Logout</button>
+    </form>
+</div>
+
+<!-- Loading -->
+<div id="loading">Loading candidates...</div>
+
+<!-- Candidate List -->
+<div id="candidateList">
+    @foreach (var c in Model)
+    {
+        <div class="candidate-card">
+            <h3>@c.Name</h3>
+            <p>@c.Description</p>
+            <button onclick="vote('@c.Id')">Vote</button>
+        </div>
+    }
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+    setTimeout(() => {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("candidateList").style.display = "flex";
+    }, 1000);
+
+    function vote(id) {
+        fetch('/User/Vote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ candidateId: id })
+        })
+        .then(response => {
+            if (response.ok) {
+                alert("✅ Your vote has been recorded!");
+            } else {
+                alert("❌ Vote failed.");
+            }
+        })
+        .catch(error => {
+            console.error("Error submitting vote:", error);
+        });
+    }
+
+  
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/dashboardHub")
+        .build();
+
+    connection.on("ReceiveUpdate", () => {
+        location.reload();
+    });
+
+    connection.start()
+        .then(() => console.log("✅ SignalR connected"))
+        .catch(err => console.error("❌ SignalR connection failed:", err));
+</script>tart().catch(err => console.error(err));
+

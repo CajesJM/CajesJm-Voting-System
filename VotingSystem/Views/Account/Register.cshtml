@@ -1,0 +1,267 @@
+﻿@model VotingSystem.Models.RegisterViewModel
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.5;
+        animation: float 10s infinite ease-in-out alternate;
+    }
+
+    .shape1 {
+        width: 400px;
+        height: 400px;
+        background: #9575cd;
+        top: -120px;
+        left: -150px;
+        animation-delay: 0s;
+    }
+
+    .shape2 {
+        width: 500px;
+        height: 500px;
+        background: #7e57c2;
+        bottom: -200px;
+        right: -120px;
+        animation-delay: 2s;
+    }
+
+    .shape3 {
+        width: 350px;
+        height: 350px;
+        background: #b39ddb;
+        top: 60%;
+        left: 60%;
+        animation-delay: 1s;
+    }
+
+    @@keyframes float {
+        0%
+
+    {
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        transform: translateY(30px) scale(1.05);
+    }
+
+    }
+
+    .register-card {
+        position: relative;
+        z-index: 1;
+        background: #fff;
+        padding: 60px 45px;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 480px;
+        overflow: hidden;
+        animation: fadeIn 0.8s ease;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 8px;
+        accent-color: #7e57c2;
+    }
+
+        .register-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            padding: 3px;
+            background: conic-gradient(from 0deg, #7e57c2, #b388ff, #ffffff, #9575cd, #b388ff, #7e57c2);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: rotateBorder 6s linear infinite;
+            z-index: -1;
+            box-shadow: 0 0 20px rgba(155, 89, 182, 0.35);
+        }
+
+    @@keyframes rotateBorder {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    h2 {
+        text-align: center;
+        color: #5e35b1;
+        font-size: 30px;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+
+    label {
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    input[type="text"], input[type="password"] {
+        padding: 12px;
+        margin-bottom: 18px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #7e57c2;
+            box-shadow: 0 0 8px rgba(126, 87, 194, 0.4);
+            outline: none;
+        }
+
+    .notification {
+        background-color: #fbe9e7;
+        color: #c62828;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ef9a9a;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        background: #7e57c2;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        button:hover {
+            background: #5e35b1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(126, 87, 194, 0.4);
+        }
+
+    .links {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+        .links a {
+            text-decoration: none;
+            color: #5e35b1;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+            .links a:hover {
+                color: #4527a0;
+            }
+
+    @@media (max-width: 500px) {
+        .register-card
+
+    {
+        padding: 35px 25px;
+        width: 90%;
+    }
+
+    }
+</style>
+
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
+
+<div class="register-card">
+    <h2>Register</h2>
+
+    <form asp-action="Register" method="post">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="notification">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <label asp-for="Username">Username</label>
+        <input asp-for="Username" placeholder="Enter your username" required />
+        <span asp-validation-for="Username" class="text-danger"></span>
+
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" type="password" placeholder="Enter your password" required />
+        <div class="checkbox-container">
+            <input type="checkbox" onclick="togglePassword()" id="showPassword">
+            <label for="showPassword">Show Password</label>
+        </div>
+
+        <button type="submit">Register</button>
+
+        <div class="links">
+            <a href="/Account/Login">Back to Login</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+         function togglePassword() {
+            const x = document.getElementById("Password");
+            x.type = x.type === "password" ? "text" : "password";
+        }
+    </script>
+}

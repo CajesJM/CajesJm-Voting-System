@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": ".gitignore",
+              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\.gitignore",
+              "RelativeDocumentMoniker": "VotingSystem\\.gitignore",
+              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\.gitignore",
+              "RelativeToolTip": "VotingSystem\\.gitignore",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-10-15T11:25:06.659Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
