@@ -1,0 +1,525 @@
+﻿@model List<VotingSystem.Models.CourseStat>
+
+@{
+    ViewData["Title"] = "Voting Statistics";
+}
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f3f3f3;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        background: #7e57c2;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+    }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .logout-button {
+        background: #fff;
+        color: #7e57c2;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background: #e0d1f5;
+            transform: translateY(-2px);
+        }
+
+    .container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    /* Overview Cards */
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .overview-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .overview-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .overview-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+    .card-primary::before {
+        background: linear-gradient(90deg, #7e57c2, #b388ff);
+    }
+
+    .card-success::before {
+        background: linear-gradient(90deg, #66bb6a, #81c784);
+    }
+
+    .card-warning::before {
+        background: linear-gradient(90deg, #ffa726, #ffb74d);
+    }
+
+    .card-info::before {
+        background: linear-gradient(90deg, #42a5f5, #64b5f6);
+    }
+
+    .overview-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .overview-number {
+        font-size: 2.8em;
+        font-weight: 700;
+        margin: 10px 0;
+        display: block;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .overview-label {
+        color: #666;
+        font-size: 1em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .overview-percentage {
+        font-size: 1.2em;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+
+    /* Progress Bars */
+    .progress-section {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+
+        .progress-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+            border-radius: 18px 18px 0 0;
+        }
+
+    .progress-item {
+        margin-bottom: 25px;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .progress-title {
+        font-weight: 600;
+        color: #333;
+        font-size: 1.1em;
+    }
+
+    .progress-stats {
+        color: #666;
+        font-weight: 600;
+        font-size: 0.9em;
+    }
+
+    .progress-bar-container {
+        background: #f0f0f0;
+        border-radius: 10px;
+        height: 12px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s ease-in-out;
+        position: relative;
+    }
+
+    .progress-high {
+        background: linear-gradient(90deg, #66bb6a, #81c784);
+    }
+
+    .progress-medium {
+        background: linear-gradient(90deg, #ffa726, #ffb74d);
+    }
+
+    .progress-low {
+        background: linear-gradient(90deg, #ef5350, #e57373);
+    }
+
+    /* Course Statistics */
+    .course-stats {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+
+        .course-stats::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+            border-radius: 18px 18px 0 0;
+        }
+
+    .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        min-width: 800px;
+    }
+
+        .stats-table th {
+            background: linear-gradient(135deg, #7e57c2, #9575cd);
+            color: white;
+            padding: 18px 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9em;
+        }
+
+        .stats-table td {
+            padding: 16px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-weight: 500;
+        }
+
+        .stats-table tbody tr:hover {
+            background: linear-gradient(90deg, #f3e5f5, #ede7f6);
+            transform: scale(1.01);
+        }
+
+    .percentage-cell {
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .high-percentage {
+        color: #2e7d32;
+        background: #e8f5e9;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+
+    .medium-percentage {
+        color: #ef6c00;
+        background: #fff3e0;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+
+    .low-percentage {
+        color: #c62828;
+        background: #ffebee;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+
+    /* Charts Section */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .chart-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .chart-placeholder {
+        height: 200px;
+        background: linear-gradient(135deg, #f3e5f5, #ede7f6);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #7e57c2;
+        font-weight: 600;
+        font-size: 1.1em;
+    }
+
+    /* Back Link */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 25px;
+        padding: 12px 25px;
+        background: linear-gradient(135deg, #7e57c2, #9575cd);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(126, 87, 194, 0.4);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .back-link::before {
+            content: '←';
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+        }
+
+        .overview-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .container {
+            padding: 0 15px;
+        }
+    }
+
+    /* Animation */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .overview-card, .progress-section, .course-stats, .chart-card {
+        animation: fadeIn 0.6s ease;
+    }
+</style>
+
+<div class="header">
+    <h2>📊 Voting Statistics</h2>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">🚪 Logout</button>
+    </form>
+</div>
+
+<div class="container">
+    <!-- Overview Cards -->
+    <div class="overview-grid">
+        <div class="overview-card card-primary">
+            <span class="overview-icon">👥</span>
+            <div class="overview-number">@ViewBag.TotalUsers</div>
+            <div class="overview-label">Total Users</div>
+        </div>
+
+        <div class="overview-card card-success">
+            <span class="overview-icon">🗳️</span>
+            <div class="overview-number">@ViewBag.VotedUsers</div>
+            <div class="overview-label">Voted Users</div>
+        </div>
+
+        <div class="overview-card card-warning">
+            <span class="overview-icon">📈</span>
+            <div class="overview-number">@ViewBag.VotePercentage%</div>
+            <div class="overview-label">Voting Percentage</div>
+        </div>
+
+        <div class="overview-card card-info">
+            <span class="overview-icon">⏳</span>
+            <div class="overview-number">@(ViewBag.TotalUsers - ViewBag.VotedUsers)</div>
+            <div class="overview-label">Not Voted</div>
+        </div>
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="progress-section">
+        <h3 style="margin: 0 0 25px 0; color: #5e35b1; font-size: 1.6em;">
+            📊 Overall Voting Progress
+        </h3>
+
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="progress-title">Total Voting Progress</span>
+                <span class="progress-stats">@ViewBag.VotedUsers / @ViewBag.TotalUsers users</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar @(ViewBag.VotePercentage >= 70 ? "progress-high" : ViewBag.VotePercentage >= 40 ? "progress-medium" : "progress-low")"
+                     style="width: @ViewBag.VotePercentage%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    <div class="course-stats">
+        <h3 style="margin: 0 0 25px 0; color: #5e35b1; font-size: 1.6em;">
+            🎓 Course-wise Statistics
+        </h3>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 3em; margin-bottom: 15px;">📋</div>
+                <h4>No Course Data Available</h4>
+                <p>No course statistics to display at this time.</p>
+            </div>
+        }
+        else
+        {
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Total Students</th>
+                        <th>Voted Students</th>
+                        <th>Voting Percentage</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@course.CourseName</strong>
+                            </td>
+                            <td>@course.TotalStudents</td>
+                            <td>@course.VotedStudents</td>
+                            <td class="percentage-cell">
+                                <span class="@(course.Percentage >= 70 ? "high-percentage" : course.Percentage >= 40 ? "medium-percentage" : "low-percentage")">
+                                    @course.Percentage.ToString("0.0")%
+                                </span>
+                            </td>
+                            <td>
+                                <div style="background: #f0f0f0; border-radius: 10px; height: 8px; width: 100%;">
+                                    <div style="height: 100%; border-radius: 10px;
+                                                        background: @(course.Percentage >= 70 ? "linear-gradient(90deg, #66bb6a, #81c784)" :
+                                                                                         course.Percentage >= 40 ? "linear-gradient(90deg, #ffa726, #ffb74d)" : "linear-gradient(90deg, #ef5350, #e57373)");
+                                                width: @(course.Percentage > 100 ? 100 : course.Percentage)%;">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <!-- Charts Placeholder -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h4 style="margin: 0 0 20px 0; color: #5e35b1;">📈 Voting Distribution</h4>
+            <div class="chart-placeholder">
+                📊 Chart: Voting by Course
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h4 style="margin: 0 0 20px 0; color: #5e35b1;">🎯 Participation Rate</h4>
+            <div class="chart-placeholder">
+                📈 Chart: Participation Trends
+            </div>
+        </div>
+    </div>
+
+    <a href="@Url.Action("Dashboard")" class="back-link">Back to Dashboard</a>
+</div>
+
+<script>
+    // Animate progress bars on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 300);
+        });
+
+        // Animate table rows
+        const tableRows = document.querySelectorAll('.stats-table tbody tr');
+        tableRows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.1}s`;
+        });
+    });
+</script>

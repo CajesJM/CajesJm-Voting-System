@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using VotingSystem.Models; 
+using VotingSystem.Models;
 
 namespace VotingSystem.Controllers
 {
@@ -29,8 +29,7 @@ namespace VotingSystem.Controllers
         {
             var hashedPassword = SecurityHelper.HashPassword(model.Password);
             var user = await _context.Users
-        .FirstOrDefaultAsync(u => u.Username == model.Username && u.PasswordHash == hashedPassword);
-
+                .FirstOrDefaultAsync(u => u.Username == model.Username && u.PasswordHash == hashedPassword);
 
             if (user == null)
             {
@@ -38,10 +37,18 @@ namespace VotingSystem.Controllers
                 return View(model);
             }
 
+            // Check if user is approved
+            if (!user.IsApproved)
+            {
+                ModelState.AddModelError("", "Your account is pending admin approval. Please wait for approval.");
+                return View(model);
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()) // Add user ID
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -58,6 +65,7 @@ namespace VotingSystem.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }
+
         // Register
         [HttpGet]
         public IActionResult Register()
@@ -78,13 +86,24 @@ namespace VotingSystem.Controllers
             {
                 Username = model.Username,
                 PasswordHash = SecurityHelper.HashPassword(model.Password),
-                Role = "User"
+                Email = model.Email,
+                Course = model.Course,
+                RequestedRole = model.RequestedRole,
+                Role = "Pending", // Set to Pending until approved
+                IsApproved = false,
+                CreatedAt = DateTime.Now
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Login");
+            return RedirectToAction("PendingApproval");
+        }
+
+        // Pending Approval Page
+        public IActionResult PendingApproval()
+        {
+            return View();
         }
     }
 }

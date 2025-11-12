@@ -3,8 +3,24 @@
   "WorkspaceRootPath": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\views\\user\\dashboard.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\views\\user\\dashboard.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\models\\votingdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\models\\votingdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\views\\admin\\checkvotingstatus.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\views\\admin\\checkvotingstatus.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|c:\\users\\john mark\\source\\repos\\votingsystem\\votingsystem\\models\\positionsetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{19245B28-2BC8-4B1D-B4D7-A1288C7907A9}|VotingSystem\\VotingSystem.csproj|solutionrelative:votingsystem\\models\\positionsetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -19,14 +35,66 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": ".gitignore",
-              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\.gitignore",
-              "RelativeDocumentMoniker": "VotingSystem\\.gitignore",
-              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\.gitignore",
-              "RelativeToolTip": "VotingSystem\\.gitignore",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2025-10-15T11:25:06.659Z",
+              "Title": "Dashboard.cshtml",
+              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Views\\User\\Dashboard.cshtml",
+              "RelativeDocumentMoniker": "VotingSystem\\Views\\User\\Dashboard.cshtml",
+              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Views\\User\\Dashboard.cshtml",
+              "RelativeToolTip": "VotingSystem\\Views\\User\\Dashboard.cshtml",
+              "ViewState": "AgIAAL0FAAAAAAAAAAAUwOgFAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-08T14:12:05.601Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "UserController.cs",
+              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Controllers\\UserController.cs",
+              "RelativeDocumentMoniker": "VotingSystem\\Controllers\\UserController.cs",
+              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Controllers\\UserController.cs",
+              "RelativeToolTip": "VotingSystem\\Controllers\\UserController.cs",
+              "ViewState": "AgIAAAcBAAAAAAAAAAAUwBkBAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-08T14:10:31.171Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CheckVotingStatus.cshtml",
+              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Views\\Admin\\CheckVotingStatus.cshtml",
+              "RelativeDocumentMoniker": "VotingSystem\\Views\\Admin\\CheckVotingStatus.cshtml",
+              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Views\\Admin\\CheckVotingStatus.cshtml",
+              "RelativeToolTip": "VotingSystem\\Views\\Admin\\CheckVotingStatus.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-08T13:50:19.693Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "VotingDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Models\\VotingDbContext.cs",
+              "RelativeDocumentMoniker": "VotingSystem\\Models\\VotingDbContext.cs",
+              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Models\\VotingDbContext.cs",
+              "RelativeToolTip": "VotingSystem\\Models\\VotingDbContext.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAADwvyIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-08T13:40:17.508Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PositionSetting.cs",
+              "DocumentMoniker": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Models\\PositionSetting.cs",
+              "RelativeDocumentMoniker": "VotingSystem\\Models\\PositionSetting.cs",
+              "ToolTip": "C:\\Users\\John Mark\\source\\repos\\VotingSystem\\VotingSystem\\Models\\PositionSetting.cs",
+              "RelativeToolTip": "VotingSystem\\Models\\PositionSetting.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-08T13:39:51.957Z",
               "EditorCaption": ""
             }
           ]

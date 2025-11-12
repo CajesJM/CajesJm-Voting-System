@@ -1,56 +1,11 @@
 ﻿@model VotingSystem.Models.Candidate
 
 <style>
-  
     body {
         font-family: 'Poppins', sans-serif;
-        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        background: #f3f3f3;
         margin: 0;
         padding: 0;
-        overflow-x: hidden;
-        position: relative;
-    }
-
-    .bg-shape {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(100px);
-        opacity: 0.5;
-        animation: float 10s infinite ease-in-out alternate;
-    }
-
-    .shape1 {
-        width: 400px;
-        height: 400px;
-        background: #9575cd;
-        top: -120px;
-        left: -150px;
-    }
-
-    .shape2 {
-        width: 500px;
-        height: 500px;
-        background: #7e57c2;
-        bottom: -200px;
-        right: -120px;
-    }
-
-    .shape3 {
-        width: 350px;
-        height: 350px;
-        background: #b39ddb;
-        top: 60%;
-        left: 60%;
-    }
-
-    @@keyframes float {
-        0% {
-            transform: translateY(0) scale(1);
-        }
-
-        100% {
-            transform: translateY(30px) scale(1.05);
-        }
     }
 
     .header {
@@ -62,16 +17,12 @@
         color: white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         flex-wrap: wrap;
-        position: sticky;
-        top: 0;
-        z-index: 10;
     }
 
         .header h2 {
             margin: 0;
             font-size: 28px;
             font-weight: 700;
-            color: white;
         }
 
     .logout-button {
@@ -90,25 +41,267 @@
             transform: translateY(-2px);
         }
 
+    .container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    /* Form Container */
     .form-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 40px 15px;
-        box-sizing: border-box;
-    }
-
-    .form-card {
         background: #fff;
-        padding: 50px 40px;
+        padding: 40px;
         border-radius: 18px;
-        width: 100%;
-        max-width: 500px;
-        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
-        animation: fadeIn 0.8s ease;
-        box-sizing: border-box;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
     }
 
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+            border-radius: 18px 18px 0 0;
+        }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+        .form-header h2 {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #7e57c2, #b388ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+    .form-subtitle {
+        color: #666;
+        font-size: 1.1em;
+        margin: 0;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .floating-label {
+        position: relative;
+    }
+
+        .floating-label input,
+        .floating-label textarea {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e1e1e1;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .floating-label textarea {
+            min-height: 120px;
+            padding-right: 20px;
+        }
+
+            .floating-label input:focus,
+            .floating-label textarea:focus {
+                outline: none;
+                border-color: #7e57c2;
+                box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
+                transform: translateY(-2px);
+            }
+
+        .floating-label label {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 16px;
+            color: #999;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            background: white;
+            padding: 0 8px;
+            margin-left: -8px;
+        }
+
+        .floating-label.focused label,
+        .floating-label.has-value label {
+            top: -10px;
+            left: 15px;
+            font-size: 12px;
+            color: #7e57c2;
+            font-weight: 600;
+        }
+
+    .input-icon {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        opacity: 0.5;
+        transition: all 0.3s ease;
+    }
+
+    .floating-label.focused .input-icon {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    /* Character Counter */
+    .char-counter {
+        position: absolute;
+        bottom: -20px;
+        right: 0;
+        font-size: 12px;
+        color: #999;
+        transition: color 0.3s ease;
+    }
+
+    /* Button Container */
+    .button-container {
+        display: flex;
+        gap: 15px;
+        margin-top: 40px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 18px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        text-decoration: none;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #7e57c2, #9575cd);
+        color: white;
+        box-shadow: 0 8px 25px rgba(126, 87, 194, 0.3);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(126, 87, 194, 0.4);
+        }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.8);
+        color: #666;
+        border: 2px solid #e1e1e1;
+    }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: #7e57c2;
+            color: #7e57c2;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+    .btn-icon {
+        font-size: 18px;
+    }
+
+    /* Validation Styles */
+    .field-validation-error {
+        color: #ff6b6b;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .input-validation-error {
+        border-color: #ff6b6b !important;
+    }
+
+    /* Stats Preview */
+    .stats-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f3e5f5, #ede7f6);
+        border-radius: 12px;
+        border-left: 4px solid #7e57c2;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: #7e57c2;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9em;
+        color: #666;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+        }
+
+        .container {
+            padding: 0 15px;
+        }
+
+        .form-container {
+            padding: 30px 20px;
+        }
+
+        .button-container {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .stats-preview {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Animation */
     @@keyframes fadeIn {
         from {
             opacity: 0;
@@ -121,138 +314,150 @@
         }
     }
 
-
-    h2 {
-        text-align: center;
-        color: #5e35b1;
-        font-size: 28px;
-        margin-bottom: 25px;
-        font-weight: 700;
+    .form-container {
+        animation: fadeIn 0.6s ease;
     }
 
-    label {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 600;
-        color: #333;
+    .form-group {
+        animation: fadeIn 0.6s ease forwards;
+        opacity: 0;
+        transform: translateY(20px);
     }
 
-    input[type="text"], textarea {
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 18px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 15px;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-    }
-
-        input[type="text"]:focus, textarea:focus {
-            border-color: #7e57c2;
-            box-shadow: 0 0 8px rgba(126, 87, 194, 0.4);
-            outline: none;
+        .form-group:nth-child(1) {
+            animation-delay: 0.1s;
         }
 
-    textarea {
-        resize: vertical;
-        min-height: 100px;
-    }
+        .form-group:nth-child(2) {
+            animation-delay: 0.2s;
+        }
 
+        .form-group:nth-child(3) {
+            animation-delay: 0.3s;
+        }
 
     .button-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    button, .back-button {
-        flex: 1;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-
-    button {
-        background: #7e57c2;
-        color: #fff;
-    }
-
-        button:hover {
-            background: #5e35b1;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(126, 87, 194, 0.4);
-        }
-
-    .back-button {
-        background: #ccc;
-        color: #333;
-    }
-
-        .back-button:hover {
-            background: #b3b3b3;
-        }
-
-    @@media (max-width: 500px) {
-        .form-card {
-            padding: 35px 25px;
-        }
-
-        .button-container {
-            flex-direction: column;
-        }
-
-        .header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
+        animation-delay: 0.4s;
     }
 </style>
 
-
-<div class="bg-shape shape1"></div>
-<div class="bg-shape shape2"></div>
-<div class="bg-shape shape3"></div>
-
-
 <div class="header">
-    <h2>Admin Panel</h2>
+    <h2>👑 Add Candidate</h2>
     <form asp-controller="Account" asp-action="Logout" method="post">
-        <button type="submit" class="logout-button">Logout</button>
+        <button type="submit" class="logout-button">🚪 Logout</button>
     </form>
 </div>
 
+<div class="container">
+    <div class="form-container">
+        <div class="form-header">
+            <h2>Add New Candidate</h2>
+            <p class="form-subtitle">Create a new candidate for the election</p>
+        </div>
 
-<div class="form-container">
-    <div class="form-card">
-        <h2>Add New Candidate</h2>
+        <!-- Stats Preview -->
+        <div class="stats-preview">
+            <div class="stat-item">
+                <span class="stat-value">🎯</span>
+                <span class="stat-label">New Candidate</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">🏛️</span>
+                <span class="stat-label">Position</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">📝</span>
+                <span class="stat-label">Description</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">➕</span>
+                <span class="stat-label">Add to Ballot</span>
+            </div>
+        </div>
+
         <form asp-action="Create" method="post">
-            <div>
-                <label asp-for="Name">Name</label>
-                <input asp-for="Name" placeholder="Enter candidate name" required />
+            <div class="form-group floating-label">
+                <input asp-for="Name" placeholder=" " required />
+                <label asp-for="Name">🎯 Candidate Name</label>
+                <div class="input-icon">👤</div>
+                <span asp-validation-for="Name" class="field-validation-error"></span>
             </div>
-            <div>
-                <label asp-for="Position">Position</label>
-                <input asp-for="Position" placeholder="Enter candidate position" required />
+
+            <div class="form-group floating-label">
+                <input asp-for="Position" placeholder=" " required />
+                <label asp-for="Position">💼 Position</label>
+                <div class="input-icon">🏛️</div>
+                <span asp-validation-for="Position" class="field-validation-error"></span>
             </div>
-            <div>
-                <label asp-for="Description">Description</label>
-                <textarea asp-for="Description" placeholder="Enter description"></textarea>
+
+            <div class="form-group floating-label">
+                <textarea asp-for="Description" placeholder=" " maxlength="500"></textarea>
+                <label asp-for="Description">📝 Description</label>
+                <div class="char-counter" id="charCounter">0/500 characters</div>
+                <span asp-validation-for="Description" class="field-validation-error"></span>
             </div>
 
             <div class="button-container">
-                <button type="submit">Add Candidate</button>
-                <a href="/Admin/Dashboard" class="back-button">Back</a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-icon">➕</span>
+                    Add Candidate
+                </button>
+                <a href="/Admin/Dashboard" class="btn btn-secondary">
+                    <span class="btn-icon">←</span>
+                    Back to Dashboard
+                </a>
             </div>
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+
+        const descriptionTextarea = document.querySelector('textarea[name="Description"]');
+        const charCounter = document.getElementById('charCounter');
+
+        if (descriptionTextarea && charCounter) {
+            descriptionTextarea.addEventListener('input', function() {
+                const length = this.value.length;
+                charCounter.textContent = `${length}/500 characters`;
+
+                if (length > 450) {
+                    charCounter.style.color = '#ff6b6b';
+                } else if (length > 400) {
+                    charCounter.style.color = '#ffa726';
+                } else {
+                    charCounter.style.color = '#999';
+                }
+            });
+
+         
+            charCounter.textContent = `${descriptionTextarea.value.length}/500 characters`;
+        }
+
+       
+        document.querySelectorAll('.floating-label input, .floating-label textarea').forEach(input => {
+           
+            if (input.value) {
+                input.parentElement.classList.add('has-value');
+            }
+
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+
+            input.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.parentElement.classList.remove('focused');
+                }
+                this.parentElement.classList.toggle('has-value', !!this.value);
+            });
+        });
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="btn-icon">⏳</span> Adding Candidate...';
+            submitBtn.disabled = true;
+        });
+    </script>
+}

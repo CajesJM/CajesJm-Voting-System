@@ -1,0 +1,23 @@
+﻿<h2>Voting Status Debug</h2>
+<p>Configuration Exists: @ViewBag.ConfigExists</p>
+<p>Configuration ID: @ViewBag.ConfigId</p>
+<p>Current Voting Status: @(ViewBag.CurrentStatus ? "Open" : "Closed")</p>
+
+<button onclick="testOpenVoting()">Test Open Voting</button>
+<button onclick="testCloseVoting()">Test Close Voting</button>
+
+<script>
+    async function testOpenVoting() {
+        const response = await fetch('/Admin/OpenVoting', { method: 'POST' });
+        const result = await response.json();
+        alert(result.message);
+        location.reload();
+    }
+
+    async function testCloseVoting() {
+        const response = await fetch('/Admin/CloseVoting', { method: 'POST' });
+        const result = await response.json();
+        alert(result.message);
+        location.reload();
+    }
+</script>

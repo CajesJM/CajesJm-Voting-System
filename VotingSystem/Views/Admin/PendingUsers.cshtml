@@ -1,0 +1,475 @@
+﻿@model List<User>
+
+@{
+    ViewData["Title"] = "Pending User Approvals";
+}
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f3f3f3;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        background: #7e57c2;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+    }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .logout-button {
+        background: #fff;
+        color: #7e57c2;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background: #e0d1f5;
+            transform: translateY(-2px);
+        }
+
+    .container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    /* Alert Styles */
+    .alert {
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        font-weight: 500;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border-color: #66bb6a;
+    }
+
+    .alert-info {
+        background: #e3f2fd;
+        color: #1565c0;
+        border-color: #42a5f5;
+        text-align: center;
+        padding: 40px;
+    }
+
+    /* Table Container */
+    .table-container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        overflow-x: auto;
+        position: relative;
+    }
+
+        .table-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+            border-radius: 18px 18px 0 0;
+        }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        min-width: 1000px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #7e57c2, #9575cd);
+        color: white;
+    }
+
+    th {
+        padding: 18px 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9em;
+        position: relative;
+    }
+
+        th:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: rgba(255,255,255,0.3);
+        }
+
+    td {
+        padding: 16px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        font-weight: 500;
+    }
+
+    tbody tr {
+        transition: all 0.3s ease;
+    }
+
+        tbody tr:hover {
+            background: linear-gradient(90deg, #f3e5f5, #ede7f6);
+            transform: scale(1.01);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+    /* Action Buttons */
+    .action-form {
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9em;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #66bb6a, #4caf50);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 187, 106, 0.3);
+    }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 187, 106, 0.4);
+        }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef5350, #e53935);
+        color: white;
+        box-shadow: 0 4px 15px rgba(239, 83, 80, 0.3);
+    }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 83, 80, 0.4);
+        }
+
+    /* Role Badges */
+    .role-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .role-admin {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+
+    .role-user {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #bbdefb;
+    }
+
+    /* Stats Header */
+    .stats-header {
+        background: linear-gradient(135deg, #f3e5f5, #ede7f6);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        border-left: 4px solid #7e57c2;
+    }
+
+        .stats-header h3 {
+            margin: 0 0 10px 0;
+            color: #5e35b1;
+            font-size: 1.6em;
+        }
+
+        .stats-header p {
+            margin: 0;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+            .stats-header p strong {
+                color: #7e57c2;
+                font-size: 1.2em;
+            }
+
+    /* Back Link */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 25px;
+        padding: 12px 25px;
+        background: linear-gradient(135deg, #7e57c2, #9575cd);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(126, 87, 194, 0.4);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .back-link::before {
+            content: '←';
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+        .empty-state h4 {
+            margin: 20px 0 10px 0;
+            color: #5e35b1;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+        }
+
+        .container {
+            padding: 0 15px;
+        }
+
+        .table-container {
+            padding: 20px 15px;
+        }
+
+        table {
+            min-width: 800px;
+        }
+
+        .action-form {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Animation */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .table-container, .alert {
+        animation: fadeIn 0.6s ease;
+    }
+
+    tbody tr {
+        animation: fadeIn 0.6s ease forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+        tbody tr:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        tbody tr:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        tbody tr:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        tbody tr:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        tbody tr:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+</style>
+
+<div class="header">
+    <h2>⏳ Pending User Approvals</h2>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">🚪 Logout</button>
+    </form>
+</div>
+
+<div class="container">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            ✅ @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="table-container">
+            <div class="empty-state">
+                <div style="font-size: 4em; margin-bottom: 20px;">🎉</div>
+                <h4>No Pending Approvals</h4>
+                <p>All users have been approved! The queue is currently empty.</p>
+            </div>
+            <a href="@Url.Action("Dashboard")" class="back-link">Back to Dashboard</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <div class="stats-header">
+                <h3>👥 Users Waiting for Approval</h3>
+                <p>There are <strong>@Model.Count</strong> user@(Model.Count != 1 ? "s" : "") waiting for approval in the queue.</p>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Contact</th>
+                        <th>Course</th>
+                        <th>Requested Role</th>
+                        <th>Registration Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@user.Username</strong>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>
+                                <span style="font-weight: 600; color: #5e35b1;">@user.Course</span>
+                            </td>
+                            <td>
+                                <span class="role-badge @(user.RequestedRole == "Admin" ? "role-admin" : "role-user")">
+                                    @if (user.RequestedRole == "Admin")
+                                    {
+                                        <text>👑 Admin</text>
+                                    }
+                                    else
+                                    {
+                                        <text>👤 User</text>
+                                    }
+                                </span>
+                            </td>
+                            <td>
+                                <span style="color: #666;">@user.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                <div style="font-size: 0.8em; color: #999;">@user.CreatedAt.ToString("hh:mm tt")</div>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <form asp-action="ApproveUser" method="post" class="action-form">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="submit" class="btn btn-success">
+                                            ✅ Approve
+                                        </button>
+                                    </form>
+                                    <form asp-action="RejectUser" method="post" class="action-form">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="submit" class="btn btn-danger"
+                                                onclick="return confirm('Are you sure you want to reject @user.Username? This action cannot be undone.')">
+                                            ❌ Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <a href="@Url.Action("Dashboard")" class="back-link">Back to Dashboard</a>
+        </div>
+    }
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.1}s`;
+        });
+
+     
+        document.querySelectorAll('.btn-success').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const username = this.closest('tr').querySelector('strong').textContent;
+                if (!confirm(`Approve ${username}? This will grant them access to the system.`)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>

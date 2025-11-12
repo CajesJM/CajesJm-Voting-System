@@ -49,16 +49,13 @@
     }
 
     @@keyframes float {
-        0%
+        0% {
+            transform: translateY(0) scale(1);
+        }
 
-    {
-        transform: translateY(0) scale(1);
-    }
-
-    100% {
-        transform: translateY(30px) scale(1.05);
-    }
-
+        100% {
+            transform: translateY(30px) scale(1.05);
+        }
     }
 
     .register-card {
@@ -87,48 +84,42 @@
         accent-color: #7e57c2;
     }
 
-        .register-card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: 18px;
-            padding: 3px;
-            background: conic-gradient(from 0deg, #7e57c2, #b388ff, #ffffff, #9575cd, #b388ff, #7e57c2);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            animation: rotateBorder 6s linear infinite;
-            z-index: -1;
-            box-shadow: 0 0 20px rgba(155, 89, 182, 0.35);
-        }
+    .register-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+        padding: 3px;
+        background: conic-gradient(from 0deg, #7e57c2, #b388ff, #ffffff, #9575cd, #b388ff, #7e57c2);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        animation: rotateBorder 6s linear infinite;
+        z-index: -1;
+        box-shadow: 0 0 20px rgba(155, 89, 182, 0.35);
+    }
 
     @@keyframes rotateBorder {
-        0%
+        0% {
+            transform: rotate(0deg);
+        }
 
-    {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     h2 {
@@ -145,7 +136,7 @@
         color: #333;
     }
 
-    input[type="text"], input[type="password"] {
+    input[type="text"], input[type="password"], input[type="email"], select {
         padding: 12px;
         margin-bottom: 18px;
         border: 1px solid #ccc;
@@ -153,9 +144,10 @@
         font-size: 15px;
         width: 100%;
         transition: all 0.3s ease;
+        box-sizing: border-box;
     }
 
-        input[type="text"]:focus, input[type="password"]:focus {
+        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, select:focus {
             border-color: #7e57c2;
             box-shadow: 0 0 8px rgba(126, 87, 194, 0.4);
             outline: none;
@@ -173,6 +165,18 @@
         font-size: 14px;
     }
 
+    .info-message {
+        background-color: #e3f2fd;
+        color: #1565c0;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #90caf9;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
     button {
         width: 100%;
         padding: 12px;
@@ -184,6 +188,7 @@
         font-size: 16px;
         font-weight: 600;
         transition: all 0.3s ease;
+        margin-top: 10px;
     }
 
         button:hover {
@@ -208,14 +213,25 @@
                 color: #4527a0;
             }
 
-    @@media (max-width: 500px) {
-        .register-card
-
-    {
-        padding: 35px 25px;
-        width: 90%;
+    .form-row {
+        display: flex;
+        gap: 15px;
     }
 
+        .form-row > div {
+            flex: 1;
+        }
+
+    @@media (max-width: 500px) {
+        .register-card {
+            padding: 35px 25px;
+            width: 90%;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
     }
 </style>
 
@@ -224,7 +240,11 @@
 <div class="bg-shape shape3"></div>
 
 <div class="register-card">
-    <h2>Register</h2>
+    <h2>Create Account</h2>
+
+    <div class="info-message">
+        <strong>Note:</strong> Your account will require admin approval before you can login.
+    </div>
 
     <form asp-action="Register" method="post">
         @if (!ViewData.ModelState.IsValid)
@@ -241,17 +261,42 @@
         <input asp-for="Username" placeholder="Enter your username" required />
         <span asp-validation-for="Username" class="text-danger"></span>
 
-        <label asp-for="Password">Password</label>
-        <input asp-for="Password" type="password" placeholder="Enter your password" required />
+        <label asp-for="Email">Email Address</label>
+        <input asp-for="Email" type="email" placeholder="Enter your email" required />
+        <span asp-validation-for="Email" class="text-danger"></span>
+
+        <div class="form-row">
+            <div>
+                <label asp-for="Password">Password</label>
+                <input asp-for="Password" type="password" id="Password" placeholder="Enter password" required />
+            </div>
+            <div>
+                <label asp-for="ConfirmPassword">Confirm Password</label>
+                <input asp-for="ConfirmPassword" type="password" placeholder="Confirm password" required />
+            </div>
+        </div>
+
         <div class="checkbox-container">
             <input type="checkbox" onclick="togglePassword()" id="showPassword">
             <label for="showPassword">Show Password</label>
         </div>
 
-        <button type="submit">Register</button>
+        <label asp-for="Course">Course/Program</label>
+        <input asp-for="Course" placeholder="e.g., Computer Science, Engineering" required />
+        <span asp-validation-for="Course" class="text-danger"></span>
+
+        <label asp-for="RequestedRole">Account Type</label>
+        <select asp-for="RequestedRole" required>
+            <option value="">Select account type</option>
+            <option value="User">User (Can vote)</option>
+            <option value="Admin">Admin (Manage system)</option>
+        </select>
+        <span asp-validation-for="RequestedRole" class="text-danger"></span>
+
+        <button type="submit">Register Account</button>
 
         <div class="links">
-            <a href="/Account/Login">Back to Login</a>
+            <a href="/Account/Login">Already have an account? Login here</a>
         </div>
     </form>
 </div>
@@ -259,9 +304,29 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-         function togglePassword() {
-            const x = document.getElementById("Password");
-            x.type = x.type === "password" ? "text" : "password";
+        function togglePassword() {
+            const password = document.getElementById("Password");
+            const confirmPassword = document.querySelector('input[asp-for="ConfirmPassword"]');
+
+            if (password.type === "password") {
+                password.type = "text";
+                if (confirmPassword) confirmPassword.type = "text";
+            } else {
+                password.type = "password";
+                if (confirmPassword) confirmPassword.type = "password";
+            }
         }
+
+        // Client-side password confirmation validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById("Password").value;
+            const confirmPassword = document.querySelector('input[asp-for="ConfirmPassword"]').value;
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+        });
     </script>
 }

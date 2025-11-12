@@ -1,0 +1,490 @@
+﻿@model List<User>
+
+@{
+    ViewData["Title"] = "Voter List";
+}
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f3f3f3;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        background: #7e57c2;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+    }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .logout-button {
+        background: #fff;
+        color: #7e57c2;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background: #e0d1f5;
+            transform: translateY(-2px);
+        }
+
+    .container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .filter-section {
+        background: #fff;
+        padding: 25px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        border-left: 5px solid #7e57c2;
+    }
+
+        .filter-section h3 {
+            margin: 0 0 15px 0;
+            color: #5e35b1;
+            font-size: 1.4em;
+        }
+
+    .filter-select {
+        padding: 12px 20px;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        font-size: 16px;
+        background: white;
+        color: #333;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        min-width: 250px;
+    }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #7e57c2;
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
+        }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+        }
+
+    .stat-number {
+        font-size: 2.8em;
+        font-weight: 700;
+        margin: 10px 0;
+        display: block;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 1em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-percentage {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #66bb6a;
+        margin-top: 5px;
+    }
+
+    .table-container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        overflow-x: auto;
+        position: relative;
+    }
+
+        .table-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+            border-radius: 18px 18px 0 0;
+        }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        min-width: 1000px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #7e57c2, #9575cd);
+        color: white;
+    }
+
+    th {
+        padding: 18px 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9em;
+        position: relative;
+    }
+
+        th:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: rgba(255,255,255,0.3);
+        }
+
+    td {
+        padding: 16px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        font-weight: 500;
+    }
+
+    tbody tr {
+        transition: all 0.3s ease;
+    }
+
+        tbody tr:hover {
+            background: linear-gradient(90deg, #f3e5f5, #ede7f6);
+            transform: scale(1.01);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+    .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-approved {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .badge-pending {
+        background: #fff3e0;
+        color: #ef6c00;
+        border: 1px solid #ffcc80;
+    }
+
+    .badge-voted {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .badge-not-voted {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+
+    .badge-admin {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #bbdefb;
+    }
+
+    .badge-user {
+        background: #f3e5f5;
+        color: #7b1fa2;
+        border: 1px solid #e1bee7;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 25px;
+        padding: 12px 25px;
+        background: linear-gradient(135deg, #7e57c2, #9575cd);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(126, 87, 194, 0.4);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .back-link::before {
+            content: '←';
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+    .current-filter {
+        background: #7e57c2;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        margin-left: 10px;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+        .empty-state i {
+            font-size: 4em;
+            color: #bdbdbd;
+            margin-bottom: 20px;
+        }
+
+    @@media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-select {
+            width: 100%;
+            min-width: auto;
+        }
+
+        table {
+            min-width: 800px;
+        }
+
+        .container {
+            padding: 0 15px;
+        }
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .table-container, .stat-card, .filter-section {
+        animation: fadeIn 0.6s ease;
+    }
+</style>
+
+<div class="header">
+    <h2>📊 Voter Management</h2>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">🚪 Logout</button>
+    </form>
+</div>
+
+<div class="container">
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h3>🔍 Filter Voters</h3>
+        <form method="get">
+            <select name="courseFilter" class="filter-select" onchange="this.form.submit()">
+                <option value="">📚 All Courses</option>
+                @foreach (var course in ViewBag.Courses)
+                {
+                    <option value="@course" selected="@(ViewBag.CourseFilter == course)">@course</option>
+                }
+            </select>
+            @if (!string.IsNullOrEmpty(ViewBag.CourseFilter))
+            {
+                <span class="current-filter">Currently viewing: @ViewBag.CourseFilter</span>
+            }
+        </form>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Voters</div>
+            <div class="stat-number">@ViewBag.TotalVoters</div>
+            <div class="stat-percentage">100%</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Voted</div>
+            <div class="stat-number">@ViewBag.VotedCount</div>
+            <div class="stat-percentage">
+                @((ViewBag.TotalVoters > 0 ? (ViewBag.VotedCount / (double)ViewBag.TotalVoters * 100) : 0).ToString("0.0"))%
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Not Voted</div>
+            <div class="stat-number">@(ViewBag.TotalVoters - ViewBag.VotedCount)</div>
+            <div class="stat-percentage">
+                @((ViewBag.TotalVoters > 0 ? ((ViewBag.TotalVoters - ViewBag.VotedCount) / (double)ViewBag.TotalVoters * 100) : 0).ToString("0.0"))%
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Approval Rate</div>
+            <div class="stat-number">@Model.Count(u => u.IsApproved)</div>
+            <div class="stat-percentage">
+                @((Model.Count > 0 ? (Model.Count(u => u.IsApproved) / (double)Model.Count * 100) : 0).ToString("0.0"))%
+            </div>
+        </div>
+    </div>
+
+ ->
+    <div class="table-container">
+        <h3 style="margin: 0 0 20px 0; color: #5e35b1; font-size: 1.6em;">
+            👥 Voter Directory
+            <span style="font-size: 0.8em; color: #666; font-weight: normal;">
+                (@Model.Count voters)
+            </span>
+        </h3>
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <div>📋</div>
+                <h3>No Voters Found</h3>
+                <p>No voters match your current filter criteria.</p>
+            </div>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Contact</th>
+                        <th>Course</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Voting Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@user.Username</strong>
+                                @if (!user.IsApproved)
+                                {
+                                    <div style="font-size: 0.8em; color: #ffa726;">⏳ Pending</div>
+                                }
+                            </td>
+                            <td>@user.Email</td>
+                            <td>
+                                <span style="font-weight: 600; color: #5e35b1;">@user.Course</span>
+                            </td>
+                            <td>
+                                <span class="badge @(user.Role == "Admin" ? "badge-admin" : "badge-user")">
+                                    @user.Role
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(user.IsApproved ? "badge-approved" : "badge-pending")">
+                                    @(user.IsApproved ? "✅ Approved" : "⏳ Pending")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(user.HasVoted ? "badge-voted" : "badge-not-voted")">
+                                    @(user.HasVoted ? "✅ Voted" : "❌ Not Voted")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <a href="@Url.Action("Dashboard")" class="back-link">Back to Dashboard</a>
+    </div>
+</div>
+
+<script>
+  
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.1}s`;
+        });
+    });
+</script>

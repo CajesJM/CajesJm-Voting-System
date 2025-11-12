@@ -1,0 +1,197 @@
+﻿@{
+    ViewData["Title"] = "Pending Approval";
+}
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.5;
+        animation: float 10s infinite ease-in-out alternate;
+    }
+
+    .shape1 {
+        width: 400px;
+        height: 400px;
+        background: #9575cd;
+        top: -120px;
+        left: -150px;
+        animation-delay: 0s;
+    }
+
+    .shape2 {
+        width: 500px;
+        height: 500px;
+        background: #7e57c2;
+        bottom: -200px;
+        right: -120px;
+        animation-delay: 2s;
+    }
+
+    .shape3 {
+        width: 350px;
+        height: 350px;
+        background: #b39ddb;
+        top: 60%;
+        left: 60%;
+        animation-delay: 1s;
+    }
+
+    @@keyframes float {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+
+        100% {
+            transform: translateY(30px) scale(1.05);
+        }
+    }
+
+    .pending-card {
+        position: relative;
+        z-index: 1;
+        background: #fff;
+        padding: 60px 45px;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 500px;
+        overflow: hidden;
+        animation: fadeIn 0.8s ease;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+        text-align: center;
+    }
+
+        .pending-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            padding: 3px;
+            background: conic-gradient(from 0deg, #ffa726, #ff9800, #ffffff, #ffb74d, #ff9800, #ffa726);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: rotateBorder 6s linear infinite;
+            z-index: -1;
+            box-shadow: 0 0 20px rgba(255, 167, 38, 0.35);
+        }
+
+    @@keyframes rotateBorder {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .pending-icon {
+        font-size: 64px;
+        color: #ffa726;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    h2 {
+        color: #5e35b1;
+        font-size: 28px;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .message {
+        color: #666;
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    .btn-login {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #7e57c2;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+        .btn-login:hover {
+            background: #5e35b1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(126, 87, 194, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+    @@media (max-width: 500px) {
+        .pending-card {
+            padding: 35px 25px;
+            width: 90%;
+        }
+    }
+</style>
+
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
+
+<div class="pending-card">
+    <div class="pending-icon">⏳</div>
+
+    <h2>Account Pending Approval</h2>
+
+    <div class="message">
+        <p>Your registration has been submitted successfully!</p>
+        <p>Your account is currently <strong>pending admin approval</strong>.</p>
+        <p>You will receive access to the system once an administrator reviews and approves your account.</p>
+        <p>This process usually takes 24-48 hours.</p>
+    </div>
+
+    <a href="/Account/Login" class="btn-login">Back to Login</a>
+</div>

@@ -1,64 +1,102 @@
 ﻿@model List<VotingSystem.Models.Candidate>
 @{
     ViewBag.Title = "User Dashboard";
+
+    // Safe initialization with comprehensive null checking
+    var candidatesByPosition = ViewBag.CandidatesByPosition as Dictionary<string, List<Candidate>>;
+    candidatesByPosition = candidatesByPosition ?? new Dictionary<string, List<Candidate>>();
+
+    var userVotes = ViewBag.UserVotes as List<Vote>;
+    userVotes = userVotes ?? new List<Vote>();
+
+    // Filter out any problematic votes
+    var validUserVotes = userVotes?
+        .Where(v => v != null && v.Candidate != null && !string.IsNullOrEmpty(v.Candidate.Position))
+        .ToList() ?? new List<Vote>();
+
+    // Get voting status and position settings
+    var votingStatus = ViewBag.VotingStatus as string ?? "Closed";
+    var positionSettings = ViewBag.PositionSettings as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var isVotingOpen = votingStatus == "Open";
+
+    // Calculate total candidates count
+    var totalCandidatesCount = candidatesByPosition.Sum(p => p.Value?.Count ?? 0);
+
+@functions {
+    private bool HasAllRequiredVotes()
+    {
+        var candidatesByPosition = ViewBag.CandidatesByPosition as Dictionary<string, List<Candidate>> ?? new Dictionary<string, List<Candidate>>();
+        var userVotes = ViewBag.UserVotes as List<Vote> ?? new List<Vote>();
+        var validUserVotes = userVotes?.Where(v => v != null && v.Candidate != null && !string.IsNullOrEmpty(v.Candidate.Position)).ToList() ?? new List<Vote>();
+
+        foreach (var position in candidatesByPosition.Keys)
+        {
+            var votesForPosition = validUserVotes.Where(v => v.Candidate.Position == position).ToList();
+            if (!votesForPosition.Any())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+}
 }
 
 <style>
-    /* Body and background */
     body {
         font-family: 'Poppins', sans-serif;
-        background: radial-gradient(circle at top left, #ede7f6, #d1c4e9);
+        background: #f3f3f3;
         margin: 0;
         padding: 0;
-        min-height: 100vh;
-        overflow-x: hidden;
         position: relative;
+        overflow-x: hidden;
     }
 
-    /* Floating background shapes */
+    /* Background Shapes */
     .bg-shape {
-        position: absolute;
+        position: fixed;
         border-radius: 50%;
-        filter: blur(100px);
-        opacity: 0.5;
-        animation: float 10s infinite ease-in-out alternate;
+        opacity: 0.1;
+        z-index: 0;
     }
 
     .shape1 {
-        width: 400px;
-        height: 400px;
-        background: #9575cd;
-        top: -120px;
-        left: -150px;
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(45deg, #7e57c2, #b388ff);
+        top: 10%;
+        left: 5%;
+        animation: float 6s ease-in-out infinite;
     }
 
     .shape2 {
-        width: 500px;
-        height: 500px;
-        background: #7e57c2;
-        bottom: -200px;
-        right: -120px;
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(45deg, #66bb6a, #81c784);
+        bottom: 20%;
+        right: 10%;
+        animation: float 8s ease-in-out infinite reverse;
     }
 
     .shape3 {
-        width: 350px;
-        height: 350px;
-        background: #b39ddb;
-        top: 60%;
-        left: 60%;
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(45deg, #42a5f5, #64b5f6);
+        top: 50%;
+        left: 80%;
+        animation: float 10s ease-in-out infinite;
     }
 
     @@keyframes float {
-        0% {
-            transform: translateY(0) scale(1);
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
         }
 
-        100% {
-            transform: translateY(30px) scale(1.05);
+        50% {
+            transform: translateY(-20px) rotate(180deg);
         }
     }
 
-    /* Header */
     .header {
         display: flex;
         justify-content: space-between;
@@ -68,9 +106,8 @@
         color: white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         flex-wrap: wrap;
-        position: sticky;
-        top: 0;
-        z-index: 10;
+        position: relative;
+        z-index: 100;
     }
 
         .header h2 {
@@ -95,149 +132,1534 @@
             transform: translateY(-2px);
         }
 
-    /* Candidate cards */
-    #candidateList {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 30px 15px;
+    .container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+        position: relative;
+        z-index: 10;
+    }
+
+    /* User Information Section */
+    .user-info-card {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        border-left: 5px solid #7e57c2;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .user-info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+        }
+
+    .user-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
-        display: none; /* Hidden until loading finishes */
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .info-item:hover {
+            background: #f1f3f4;
+            transform: translateX(5px);
+        }
+
+    .info-icon {
+        font-size: 24px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        border-radius: 50%;
+        color: white;
+    }
+
+    .info-content h4 {
+        margin: 0 0 5px 0;
+        color: #333;
+        font-size: 1em;
+        font-weight: 600;
+    }
+
+    .info-content p {
+        margin: 0;
+        color: #666;
+        font-size: 1.1em;
+        font-weight: 500;
+    }
+
+    /* Voting Status */
+    .voting-status {
+        background: linear-gradient(135deg, #f3e5f5, #ede7f6);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        border: 2px dashed #7e57c2;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+
+    .status-pending {
+        background: #fff3e0;
+        color: #ef6c00;
+        border: 2px solid #ffa726;
+    }
+
+    .status-voted {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 2px solid #66bb6a;
+    }
+
+    .status-closed {
+        background: #ffebee;
+        color: #c62828;
+        border: 2px solid #ef5350;
+    }
+
+    .status-open {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 2px solid #66bb6a;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+        }
+
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: 700;
+        margin: 10px 0;
+        display: block;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 1em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Ballot Preview Styles */
+    .ballot-preview {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        border-left: 5px solid #2196F3;
+        position: relative;
+    }
+
+        .ballot-preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2196F3, #64b5f6);
+            border-radius: 18px 18px 0 0;
+        }
+
+    .ballot-preview-closed {
+        border-left: 5px solid #f44336;
+        opacity: 0.8;
+    }
+
+        .ballot-preview-closed::before {
+            background: linear-gradient(90deg, #f44336, #ef5350);
+        }
+
+    .ballot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .ballot-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+        .ballot-item.has-vote {
+            border-color: #4CAF50;
+            background: #f1f8e9;
+        }
+
+    .position-title {
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .selected-candidate {
+        color: #2e7d32;
+        font-weight: 600;
+        margin: 10px 0;
+    }
+
+    .candidate-selection-item {
+        margin: 5px 0;
+        padding: 8px;
+        background: #e8f5e9;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .remove-candidate-btn {
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .remove-candidate-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.05);
+        }
+
+    .change-vote-btn {
+        background: #ffa726;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 8px;
+    }
+
+        .change-vote-btn:hover {
+            background: #ff9800;
+            transform: translateY(-1px);
+        }
+
+    .submit-ballot-btn {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 20px auto 0;
+    }
+
+        .submit-ballot-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .submit-ballot-btn:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    /* Position Section Styles */
+    .position-section {
+        background: #fff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        border-left: 4px solid #7e57c2;
+    }
+
+    .position-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+        .position-header h4 {
+            margin: 0;
+            color: #5e35b1;
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+    .position-stats {
+        color: #666;
+        font-weight: 500;
+        font-size: 0.9em;
+    }
+
+    .candidates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
     }
 
     .candidate-card {
         background: #fff;
-        border-radius: 18px;
-        padding: 25px 20px;
-        width: 250px;
-        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
-        text-align: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 2px solid #f0f0f0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
     }
 
         .candidate-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            border-color: #7e57c2;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(126, 87, 194, 0.15);
         }
 
-        .candidate-card h3 {
-            margin: 0 0 10px 0;
-            color: #5e35b1;
-            font-size: 20px;
+        .candidate-card.selected {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #f1f8e9, #e8f5e9);
         }
 
-        .candidate-card p {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 15px;
+        .candidate-card.voting-closed {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
-        .candidate-card button {
-            background: #42a5f5;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-            .candidate-card button:hover {
-                background: #1e88e5;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(30,136,229,0.4);
+            .candidate-card.voting-closed:hover {
+                transform: none;
+                border-color: #f0f0f0;
+                box-shadow: none;
             }
 
-    /* Loading */
-    #loading {
-        text-align: center;
-        font-size: 18px;
-        color: #5e35b1;
-        margin-top: 50px;
+    .candidate-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
     }
 
-    /* Responsive */
-    @@media (max-width: 768px) {
-        #candidateList {
-            flex-direction: column;
-            align-items: center;
+    .candidate-name {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+    }
+
+    .candidate-position {
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.7em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .candidate-description {
+        color: #666;
+        line-height: 1.5;
+        margin-bottom: 15px;
+        font-size: 0.95em;
+    }
+
+    .vote-count {
+        color: #666;
+        font-size: 0.85em;
+        margin-bottom: 12px;
+    }
+
+    .select-button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #66bb6a, #4caf50);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .select-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 187, 106, 0.3);
         }
 
+        .select-button:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .select-button.selected {
+            background: linear-gradient(135deg, #ffa726, #ff9800);
+        }
+
+        .select-button.voting-closed {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+    /* Progress Indicator */
+    .voting-progress {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .progress-text {
+        font-weight: 600;
+        color: #1976D2;
+        margin: 0;
+    }
+
+    /* Candidates Section */
+    .candidates-section {
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        position: relative;
+    }
+
+        .candidates-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7e57c2, #b388ff);
+            border-radius: 18px 18px 0 0;
+        }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+        .section-header h3 {
+            margin: 0;
+            color: #5e35b1;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+    /* Loading State */
+    #loading {
+        text-align: center;
+        padding: 60px 20px;
+        font-size: 1.2em;
+        color: #666;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+        grid-column: 1 / -1;
+    }
+
+    /* Voting Closed Message */
+    .voting-closed-message {
+        background: #ffebee;
+        color: #c62828;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 20px;
+        border: 2px solid #ef5350;
+        font-weight: 600;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
         .header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 10px;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .candidates-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .user-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .ballot-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .position-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .container {
+            padding: 0 15px;
+        }
+
+        .bg-shape {
+            display: none;
         }
     }
+
+    /* Animation */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-info-card, .stats-grid, .candidates-section, .ballot-preview {
+        animation: fadeIn 0.6s ease;
+    }
+
+    .candidate-card {
+        animation: fadeIn 0.6s ease forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    /* Scroll prevention */
+    html {
+        scroll-behavior: auto;
+    }
+
+    .candidate-card, .select-button {
+        scroll-margin-top: 0;
+    }
+
+        .candidate-card:focus, .select-button:focus {
+            outline: none;
+        }
+
+        .candidate-card.selected {
+            scroll-margin-top: 0;
+        }
+
+        .select-button:focus {
+            outline: 2px solid #7e57c2;
+            outline-offset: 2px;
+        }
 </style>
 
-<!-- Background shapes -->
 <div class="bg-shape shape1"></div>
 <div class="bg-shape shape2"></div>
 <div class="bg-shape shape3"></div>
 
-<!-- Header -->
 <div class="header">
-    <h2>Welcome, User!</h2>
+    <h2>🎉 Welcome, @ViewBag.Username!</h2>
     <form asp-controller="Account" asp-action="Logout" method="post">
-        <button type="submit" class="logout-button">Logout</button>
+        <button type="submit" class="logout-button">🚪 Logout</button>
     </form>
 </div>
 
-<!-- Loading -->
-<div id="loading">Loading candidates...</div>
+<div class="container">
+    <!-- User Information Section -->
+    <div class="user-info-card">
+        <h3 style="margin-top: 0; color: #5e35b1; margin-bottom: 25px;">👤 Your Information</h3>
+        <div class="user-info-grid">
+            <div class="info-item">
+                <div class="info-icon">👤</div>
+                <div class="info-content">
+                    <h4>Username</h4>
+                    <p>@ViewBag.Username</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon">📧</div>
+                <div class="info-content">
+                    <h4>Email</h4>
+                    <p>@ViewBag.UserEmail</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon">🎓</div>
+                <div class="info-content">
+                    <h4>Course</h4>
+                    <p>@ViewBag.UserCourse</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon">🗳️</div>
+                <div class="info-content">
+                    <h4>Voting Status</h4>
+                    <p style="color: @(isVotingOpen ? "#4CAF50" : "#f44336"); font-weight: bold;">
+                        @(isVotingOpen ? "Open - You Can Vote" : "Closed - Voting Ended")
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="voting-status">
+            <div class="status-badge @(ViewBag.HasVoted == true ? "status-voted" : isVotingOpen ? "status-open" : "status-closed")">
+                @if (!isVotingOpen)
+                {
+                    <span>🔒 Voting Closed</span>
+                }
+                else if (ViewBag.HasVoted == true)
+                {
+                    <span>✅ You've Voted</span>
+                }
+                else
+                {
+                    <span>⏳ Awaiting Your Vote</span>
+                }
+            </div>
+            <p style="margin: 0; color: #666; font-size: 1em;">
+                @if (!isVotingOpen)
+                {
+                    <text>Voting is currently closed. Please wait for the admin to open voting.</text>
+                }
+                else if (ViewBag.HasVoted == true)
+                {
+                    <text>Thank you for participating in the election! Your vote has been recorded.</text>
+                }
+                else
+                {
+                    <text>Cast your vote below to make your voice heard in the election.</text>
+                }
+            </p>
+        </div>
+    </div>
 
-<!-- Candidate List -->
-<div id="candidateList">
-    @foreach (var c in Model)
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Candidates</div>
+            <div class="stat-number">@totalCandidatesCount</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Your Status</div>
+            <div class="stat-number">@(ViewBag.HasVoted == true ? "Voted" : "Not Voted")</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Positions</div>
+            <div class="stat-number">@candidatesByPosition.Count</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Voting Status</div>
+            <div class="stat-number" style="color: @(isVotingOpen ? "#4CAF50" : "#f44336");">@(isVotingOpen ? "Open" : "Closed")</div>
+        </div>
+    </div>
+
+    <!-- Ballot Preview Section -->
+    @if (ViewBag.HasVoted != true)
     {
-        <div class="candidate-card">
-            <h3>@c.Name</h3>
-            <p>@c.Description</p>
-            <button onclick="vote('@c.Id')">Vote</button>
+        <div class="ballot-preview @(!isVotingOpen ? "ballot-preview-closed" : "")">
+            <h3 style="margin-top: 0; color: @(!isVotingOpen ? "#f44336" : "#1976D2"); margin-bottom: 20px;">
+                @if (!isVotingOpen)
+                {
+                    <text>🔒 Voting Closed</text>
+                }
+                else
+                {
+                    <text>📋 Your Ballot Preview</text>
+                }
+            </h3>
+
+            @if (!isVotingOpen)
+            {
+                <div class="voting-closed-message">
+                    🔒 Voting is currently closed. You cannot cast or modify votes at this time.
+                </div>
+            }
+            else
+            {
+                <div class="voting-progress">
+                    @{
+                        var votedPositions = validUserVotes.Select(v => v.Candidate.Position).Distinct().Count();
+                        var totalPositions = candidatesByPosition.Count;
+                        var progressPercentage = totalPositions > 0 ? (votedPositions * 100) / totalPositions : 0;
+                        var totalVotesCast = validUserVotes.Count;
+                    }
+                    <p class="progress-text">
+                        📊 Progress: @votedPositions of @totalPositions positions voted (@progressPercentage%)
+                        @if (totalVotesCast > votedPositions)
+                        {
+                            <br />
+                            <span style="font-size: 0.9em;">(Multiple votes in some positions)</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="ballot-grid" id="ballotSelections">
+                    @foreach (var position in candidatesByPosition.Keys)
+                    {
+                        var votesForPosition = validUserVotes.Where(v => v.Candidate.Position == position).ToList();
+                        var votesAllowed = positionSettings.ContainsKey(position) ? positionSettings[position] : 1;
+                        var safePosition = position.Replace(" ", "-");
+
+                        <div class="ballot-item @(votesForPosition.Any() ? "has-vote" : "")" id="ballot-item-@safePosition">
+                            <div class="position-title">🏛️ @position</div>
+                            <div class="position-stats" style="font-size: 0.8em; color: #666; margin-bottom: 10px;">
+                                <span id="vote-count-@safePosition">@votesForPosition.Count</span> of @votesAllowed vote@(votesAllowed > 1 ? "s" : "") used
+                            </div>
+                            <div class="selected-candidates-container" id="selection-@safePosition">
+                                @if (votesForPosition.Any())
+                                {
+                                    <div class="selected-candidates-list">
+                                        @foreach (var vote in votesForPosition)
+                                        {
+                                            <div class="candidate-selection-item" data-candidate-id="@vote.CandidateId">
+                                                <span>✅ @vote.Candidate.Name</span>
+                                                <button type="button"
+                                                        onclick="removeCandidate('@position', @vote.CandidateId, '@vote.Candidate.Name.Replace("'", "\\'")')"
+                                                        class="remove-candidate-btn">
+                                                    ✕ Remove
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                    <button type="button" onclick="clearVote('@position')" class="change-vote-btn">
+                                        ✏️ Clear All for @position
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="no-selection">⏳ Not selected</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <button id="submitBallotBtn" class="submit-ballot-btn" onclick="submitBallot()"
+                        disabled="@(!validUserVotes.Any() || validUserVotes.Count < candidatesByPosition.Count ? "disabled" : null)">
+                    📨 Submit Your Ballot
+                </button>
+            }
         </div>
     }
+    <!-- Voting Sections by Position -->
+    <div class="candidates-section">
+        <div class="section-header">
+            <h3>
+                🗳️ Cast Your Vote
+                @if (!isVotingOpen)
+                {
+                    <span style="color: #f44336; font-size: 0.8em; margin-left: 10px;">(CLOSED)</span>
+                }
+            </h3>
+            <div style="color: #666; font-weight: 500;">
+                @candidatesByPosition.Count position@(candidatesByPosition.Count != 1 ? "s" : "") available
+                @if (!isVotingOpen)
+                {
+                    <span style="color: #f44336;"> • Voting Closed</span>
+                }
+            </div>
+        </div>
+
+        @if (!isVotingOpen)
+        {
+            <div style="text-align: center; padding: 40px; color: #666; background: #fff3f3; border-radius: 12px;">
+                <div style="font-size: 4em; margin-bottom: 20px;">🔒</div>
+                <h4>Voting Currently Closed</h4>
+                <p>You cannot cast or change votes while voting is closed. Please wait for the admin to open voting.</p>
+            </div>
+        }
+        else if (ViewBag.HasVoted == true)
+        {
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 4em; margin-bottom: 20px;">✅</div>
+                <h4>Voting Completed</h4>
+                <p>You have already submitted your ballot. Thank you for voting!</p>
+                <button onclick="toggleVoteView()" class="submit-ballot-btn" style="background: linear-gradient(135deg, #7e57c2, #b388ff); margin-top: 20px;">
+                    👁️ View Your Vote
+                </button>
+            </div>
+
+            <!-- View Vote Section (Initially Hidden) -->
+            <div id="viewVoteSection" style="display: none; margin-top: 30px;">
+                <div class="ballot-preview">
+                    <h3 style="margin-top: 0; color: #7e57c2; margin-bottom: 20px;">📊 Your Submitted Vote</h3>
+                    <p style="color: #666; margin-bottom: 20px; text-align: center;">
+                        This is your final vote. Votes cannot be changed after submission.
+                    </p>
+                    <div class="ballot-grid">
+                        @foreach (var position in candidatesByPosition.Keys)
+                        {
+                            var votesForPosition = validUserVotes.Where(v => v.Candidate.Position == position).ToList();
+                            <div class="ballot-item has-vote" style="background: #f8f9fa; border-color: #7e57c2;">
+                                <div class="position-title">🏛️ @position</div>
+                                <div class="selected-candidate">
+                                    @if (votesForPosition.Any())
+                                    {
+                                        foreach (var vote in votesForPosition)
+                                        {
+                                            <div style="margin: 5px 0; padding: 8px; background: #e8f5e9; border-radius: 6px;">
+                                                ✅ @vote.Candidate.Name
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <text>❌ No vote recorded</text>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div id="loading">⏳ Loading candidates...</div>
+            <div id="candidateList" style="display: none;">
+                @if (!candidatesByPosition.Any())
+                {
+                    <div class="empty-state">
+                        <div style="font-size: 4em; margin-bottom: 20px;">📋</div>
+                        <h4>No Candidates Available</h4>
+                        <p>There are no candidates running in the current election.</p>
+                    </div>
+                }
+                else
+                {
+                    foreach (var positionGroup in candidatesByPosition)
+                    {
+                        var votesAllowed = positionSettings.ContainsKey(positionGroup.Key) ? positionSettings[positionGroup.Key] : 1;
+                        var currentVotesForPosition = validUserVotes.Where(v => v.Candidate.Position == positionGroup.Key).Count();
+
+                        <div class="position-section">
+                            <div class="position-header">
+                                <h4>🏛️ @positionGroup.Key</h4>
+                                <div class="position-stats">
+                                    @(positionGroup.Value?.Count ?? 0) candidate@(positionGroup.Value?.Count != 1 ? "s" : "")
+                                    <span style="background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-left: 10px; font-size: 0.8em;">
+                                        @votesAllowed vote@(votesAllowed > 1 ? "s" : "") allowed
+                                    </span>
+                                </div>
+                            </div>
+                            <p style="color: #666; margin-bottom: 20px;">
+                                Select @(votesAllowed > 1 ? "up to " + votesAllowed + " candidates" : "one candidate") for @positionGroup.Key
+                                @if (currentVotesForPosition > 0)
+                                {
+                                    <span style="color: #4CAF50; font-weight: 600;">(@currentVotesForPosition selected)</span>
+                                }
+                            </p>
+                            <div class="candidates-grid">
+                                @if (positionGroup.Value != null)
+                                {
+                                    foreach (var candidate in positionGroup.Value)
+                                    {
+                                        if (candidate != null)
+                                        {
+                                            var isSelected = validUserVotes.Any(v => v.CandidateId == candidate.Id);
+                                            <div class="candidate-card @(isSelected ? "selected" : "") @(!isVotingOpen ? "voting-closed" : "")"
+                                                 data-candidate-id="@candidate.Id"
+                                                 data-position="@positionGroup.Key">
+                                                <div class="candidate-header">
+                                                    <h5 class="candidate-name">@candidate.Name</h5>
+                                                    <span class="candidate-position">@candidate.Position</span>
+                                                </div>
+                                                <p class="candidate-description">@candidate.Description</p>
+                                                <div class="vote-count">📊 Current Votes: @candidate.VoteCount</div>
+                                                <button class="select-button @(isSelected ? "selected" : "") @(!isVotingOpen ? "voting-closed" : "")"
+                                                        onclick="voteForPosition(@candidate.Id, '@positionGroup.Key', '@candidate.Name.Replace("'", "\\'")')"
+                                                        @(isSelected ? "disabled" : !isVotingOpen ? "disabled" : "")>
+                                                    @if (!isVotingOpen)
+                                                    {
+                                                        <span>🔒 Voting Closed</span>
+                                                    }
+                                                    else if (isSelected)
+                                                    {
+                                                        <span>✅ Selected</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>🗳️ Select</span>
+                                                    }
+                                                </button>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 <script>
-    setTimeout(() => {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("candidateList").style.display = "flex";
-    }, 1000);
+    // Global variable to track voting status
+    let isVotingOpen = @Json.Serialize(isVotingOpen);
+    let userVotes = @Html.Raw(Json.Serialize(validUserVotes.Select(v => new { CandidateId = v.CandidateId, Name = v.Candidate.Name, Position = v.Candidate.Position })));
 
-    function vote(id) {
-        fetch('/User/Vote', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ candidateId: id })
-        })
-        .then(response => {
-            if (response.ok) {
-                alert("✅ Your vote has been recorded!");
-            } else {
-                alert("❌ Vote failed.");
-            }
-        })
-        .catch(error => {
-            console.error("Error submitting vote:", error);
+    // Show loading then candidates
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            const loading = document.getElementById("loading");
+            const candidateList = document.getElementById("candidateList");
+            if (loading) loading.style.display = "none";
+            if (candidateList) candidateList.style.display = "block";
+
+            // Trigger animations for candidate cards
+            setTimeout(() => {
+                document.querySelectorAll('.candidate-card').forEach((card, index) => {
+                    card.style.animationDelay = `${index * 0.1}s`;
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                });
+            }, 100);
+        }, 1000);
+
+        // Prevent page scroll and default behavior on candidate clicks
+        const candidateCards = document.querySelectorAll('.candidate-card');
+        candidateCards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Prevent any default behavior that might cause scrolling
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Only proceed if clicking on the card itself, not the button
+                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    const button = this.querySelector('.select-button');
+                    if (button && !button.disabled && isVotingOpen) {
+                        const candidateId = this.getAttribute('data-candidate-id');
+                        const position = this.getAttribute('data-position');
+                        const candidateName = this.querySelector('.candidate-name').textContent;
+
+                        // Use the voting function
+                        voteForPosition(candidateId, position, candidateName);
+                    }
+                }
+            });
         });
+
+        // Also prevent button clicks from causing scroll
+        const selectButtons = document.querySelectorAll('.select-button');
+        selectButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!this.disabled && isVotingOpen) {
+                    const card = this.closest('.candidate-card');
+                    const candidateId = card.getAttribute('data-candidate-id');
+                    const position = card.getAttribute('data-position');
+                    const candidateName = card.querySelector('.candidate-name').textContent;
+
+                    voteForPosition(candidateId, position, candidateName);
+                }
+            });
+        });
+    });
+
+    // Vote for specific position (improved to prevent scrolling)
+    async function voteForPosition(candidateId, position, candidateName) {
+        // Check if voting is open
+        if (!isVotingOpen) {
+            alert('❌ Voting is currently closed. You cannot cast votes at this time.');
+            return;
+        }
+
+        // Store current scroll position to restore later
+        const currentScrollY = window.scrollY;
+
+        try {
+            console.log('Voting for candidate:', candidateId, 'position:', position);
+
+            const response = await fetch('/User/VoteForPosition', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ candidateId: parseInt(candidateId) })
+            });
+
+            const data = await response.json();
+            console.log('Vote response:', data);
+
+            if (response.ok) {
+                // Add to local votes tracking
+                userVotes.push({
+                    CandidateId: parseInt(candidateId),
+                    Name: candidateName,
+                    Position: position
+                });
+
+                // Select the chosen candidate
+                const selectedCard = document.querySelector(`[data-candidate-id="${candidateId}"]`);
+                if (selectedCard) {
+                    selectedCard.classList.add('selected');
+                    const button = selectedCard.querySelector('.select-button');
+                    if (button) {
+                        button.classList.add('selected');
+                        button.disabled = true;
+                        button.innerHTML = '<span>✅ Selected</span>';
+                    }
+                }
+
+                // Update ballot preview in real-time WITHOUT scrolling
+                updateBallotPreview(position, candidateId, candidateName, true);
+                updateSubmitButton();
+                showVoteSuccess(position);
+
+                // Restore scroll position to prevent jumping to ballot preview
+                setTimeout(() => {
+                    window.scrollTo(0, currentScrollY);
+                }, 10);
+
+            } else {
+                alert(`❌ ${data.message || 'Failed to vote'}`);
+
+                // Restore scroll position on error too
+                setTimeout(() => {
+                    window.scrollTo(0, currentScrollY);
+                }, 10);
+            }
+        } catch (error) {
+            console.error('Voting error:', error);
+            alert('❌ An error occurred while voting');
+
+            // Restore scroll position even on error
+            setTimeout(() => {
+                window.scrollTo(0, currentScrollY);
+            }, 10);
+        }
     }
 
-  
+    // Remove individual candidate from position
+        async function removeCandidate(position, candidateId, candidateName) {
+        if (!isVotingOpen) {
+            alert('❌ Voting is currently closed. You cannot modify votes at this time.');
+            return;
+        }
+
+        if (!confirm(`Remove ${candidateName} from your vote for ${position}?`)) return;
+
+        try {
+            const candidateIdNum = parseInt(candidateId);
+            console.log('Removing candidate:', { position, candidateId: candidateIdNum, candidateName });
+
+            const response = await fetch('/User/ClearVote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    position: position,
+                    candidateId: candidateIdNum
+                })
+            });
+
+            const data = await response.json();
+            console.log('Remove response:', data);
+
+            if (response.ok && data.success) {
+                // Remove from local votes tracking
+                userVotes = userVotes.filter(vote => vote.CandidateId !== candidateIdNum);
+
+                // Update candidate card
+                const candidateCard = document.querySelector(`[data-candidate-id="${candidateId}"]`);
+                if (candidateCard) {
+                    candidateCard.classList.remove('selected');
+                    const button = candidateCard.querySelector('.select-button');
+                    if (button) {
+                        button.classList.remove('selected');
+                        button.disabled = false;
+                        button.innerHTML = '<span>🗳️ Select</span>';
+                    }
+                }
+
+                // Update ballot preview
+                updateBallotPreview(position, candidateId, candidateName, false);
+                updateSubmitButton();
+
+                // Show success message
+                showVoteSuccess(position, 'removed');
+            } else {
+                alert(`❌ ${data.message || 'Failed to remove candidate'}`);
+            }
+        } catch (error) {
+            console.error('Remove candidate error:', error);
+            alert('❌ An error occurred while removing candidate');
+        }
+    }
+
+    // Show subtle success message
+    function showVoteSuccess(position, action = 'added') {
+        const positionElements = document.querySelectorAll(`[data-position="${position}"]`);
+        if (positionElements.length > 0) {
+            const positionSection = positionElements[0].closest('.position-section');
+            if (positionSection) {
+                const positionHeader = positionSection.querySelector('.position-header h4');
+                if (positionHeader) {
+                    const originalHTML = positionHeader.innerHTML;
+                    const icon = action === 'removed' ? '🗑️' : '✓';
+                    const color = action === 'removed' ? '#ff9800' : '#4CAF50';
+                    positionHeader.innerHTML = `🏛️ ${position} <span style="color: ${color}; margin-left: 10px;">${icon}</span>`;
+                    setTimeout(() => {
+                        positionHeader.innerHTML = originalHTML;
+                    }, 1000);
+                }
+            }
+        }
+    }
+
+    // Clear ALL votes for a position
+        async function clearVote(position) {
+        if (!isVotingOpen) {
+            alert('❌ Voting is currently closed. You cannot modify votes at this time.');
+            return;
+        }
+
+        if (!confirm(`Clear ALL your votes for ${position}?`)) return;
+
+        try {
+            const response = await fetch('/User/ClearVote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ position: position })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Remove all votes for this position from local tracking
+                const removedVotes = userVotes.filter(vote => vote.Position === position);
+                userVotes = userVotes.filter(vote => vote.Position !== position);
+
+                // Update UI for all candidates in this position
+                document.querySelectorAll(`[data-position="${position}"]`).forEach(card => {
+                    card.classList.remove('selected');
+                    const button = card.querySelector('.select-button');
+                    if (button) {
+                        button.classList.remove('selected');
+                        button.disabled = false;
+                        button.innerHTML = '<span>🗳️ Select</span>';
+                    }
+                });
+
+                // Update ballot preview for each removed candidate
+                removedVotes.forEach(vote => {
+                    updateBallotPreview(position, vote.CandidateId, vote.Name, false);
+                });
+
+                updateSubmitButton();
+                showVoteSuccess(position, 'cleared');
+            } else {
+                alert(`❌ ${data.message || 'Failed to clear vote'}`);
+            }
+        } catch (error) {
+            console.error('Clear vote error:', error);
+            alert('❌ An error occurred while clearing vote');
+        }
+    }
+
+
+       // Real-time ballot preview update - COMPLETELY REWRITTEN
+    function updateBallotPreview(position, candidateId, candidateName, isAdding) {
+        const safePosition = position.replace(/ /g, '-');
+        const selectionContainer = document.getElementById(`selection-${safePosition}`);
+        const ballotItem = document.getElementById(`ballot-item-${safePosition}`);
+        const voteCountSpan = document.getElementById(`vote-count-${safePosition}`);
+
+        if (!selectionContainer || !ballotItem || !voteCountSpan) {
+            console.error('Ballot preview elements not found for position:', position);
+            return;
+        }
+
+        if (isAdding) {
+            // ADDING A CANDIDATE
+            let selectedCandidatesList = selectionContainer.querySelector('.selected-candidates-list');
+
+            // If no list exists, create one and remove the "Not selected" message
+            if (!selectedCandidatesList) {
+                selectionContainer.innerHTML = ''; // Clear "Not selected"
+                selectedCandidatesList = document.createElement('div');
+                selectedCandidatesList.className = 'selected-candidates-list';
+                selectionContainer.appendChild(selectedCandidatesList);
+            }
+
+            // Check if candidate is already in the list (prevent duplicates)
+            const existingCandidate = selectedCandidatesList.querySelector(`[data-candidate-id="${candidateId}"]`);
+            if (existingCandidate) {
+                console.log('Candidate already in list, skipping duplicate');
+                return;
+            }
+
+            // Create new candidate item
+            const candidateItem = document.createElement('div');
+            candidateItem.className = 'candidate-selection-item';
+            candidateItem.setAttribute('data-candidate-id', candidateId);
+            candidateItem.innerHTML = `
+                <span>✅ ${candidateName}</span>
+                <button type="button"
+                        onclick="removeCandidate('${position}', ${candidateId}, '${candidateName.replace(/'/g, "\\'")}')"
+                        class="remove-candidate-btn">
+                    ✕ Remove
+                </button>
+            `;
+
+            // Add to the list
+            selectedCandidatesList.appendChild(candidateItem);
+
+            // Add Clear All button if it doesn't exist
+            let clearButton = selectionContainer.querySelector('.change-vote-btn');
+            if (!clearButton) {
+                clearButton = document.createElement('button');
+                clearButton.type = 'button';
+                clearButton.onclick = function() { clearVote('${position}'); };
+                clearButton.className = 'change-vote-btn';
+                clearButton.textContent = `✏️ Clear All for ${position}`;
+                selectionContainer.appendChild(clearButton);
+            }
+
+            // Update vote count
+            const currentCount = parseInt(voteCountSpan.textContent) || 0;
+            voteCountSpan.textContent = currentCount + 1;
+
+            // Update ballot item style
+            ballotItem.classList.add('has-vote');
+
+        } else {
+            // REMOVING A CANDIDATE
+            const selectedCandidatesList = selectionContainer.querySelector('.selected-candidates-list');
+            if (selectedCandidatesList) {
+                const candidateItem = selectedCandidatesList.querySelector(`[data-candidate-id="${candidateId}"]`);
+                if (candidateItem) {
+                    candidateItem.remove();
+
+                    // Update vote count
+                    const currentCount = parseInt(voteCountSpan.textContent) || 0;
+                    voteCountSpan.textContent = Math.max(0, currentCount - 1);
+
+                    // Check if any candidates left
+                    const remainingCandidates = selectedCandidatesList.querySelectorAll('.candidate-selection-item');
+
+                    if (remainingCandidates.length === 0) {
+                        // No candidates left - show "Not selected" and remove Clear All button
+                        selectionContainer.innerHTML = '<div class="no-selection">⏳ Not selected</div>';
+                        ballotItem.classList.remove('has-vote');
+                    }
+                    // If candidates remain, keep the list and Clear All button
+                }
+            }
+        }
+
+        // Update progress and submit button
+        updateVotingProgress();
+        updateSubmitButton();
+    }
+
+       // Enhanced voting progress update
+    function updateVotingProgress() {
+        const votedItems = document.querySelectorAll('.ballot-item.has-vote');
+        const totalPositions = @candidatesByPosition.Count;
+        const progressPercentage = totalPositions > 0 ? (votedItems.length * 100) / totalPositions : 0;
+
+        const progressText = document.querySelector('.progress-text');
+        if (progressText) {
+            const totalVotesCast = userVotes.length;
+            const votedPositions = [...new Set(userVotes.map(v => v.Position))].length;
+            const remainingPositions = totalPositions - votedPositions;
+
+            let progressHtml = `📊 Progress: ${votedPositions} of ${totalPositions} positions voted (${Math.round(progressPercentage)}%)`;
+
+            if (remainingPositions > 0) {
+                progressHtml += `<br /><span style="font-size: 0.9em; color: #ff9800;">${remainingPositions} position${remainingPositions > 1 ? 's' : ''} remaining</span>`;
+            }
+
+            if (totalVotesCast > votedPositions) {
+                progressHtml += `<br /><span style="font-size: 0.9em;">(Multiple votes in some positions)</span>`;
+            }
+
+            progressText.innerHTML = progressHtml;
+        }
+    }
+
+    // Update submit button state
+        function updateSubmitButton() {
+        const totalPositions = @candidatesByPosition.Count;
+        const votedCount = document.querySelectorAll('.ballot-item.has-vote').length;
+        const submitBtn = document.getElementById('submitBallotBtn');
+
+        if (submitBtn) {
+            // Check if ALL positions have at least one vote
+            const allPositionsVoted = votedCount === totalPositions;
+            submitBtn.disabled = !allPositionsVoted || !isVotingOpen;
+
+            // Update button text to show requirement
+            if (!allPositionsVoted) {
+                submitBtn.title = `Please vote for all ${totalPositions - votedCount} remaining positions`;
+            } else {
+                submitBtn.title = "Ready to submit your ballot";
+            }
+        }
+    }
+
+        // Submit final ballot with enhanced validation
+    async function submitBallot() {
+        if (!isVotingOpen) {
+            alert('❌ Voting is currently closed. You cannot submit your ballot at this time.');
+            return;
+        }
+
+        // Client-side validation
+        const votedPositions = document.querySelectorAll('.ballot-item.has-vote').length;
+        const totalPositions = @candidatesByPosition.Count;
+
+        if (votedPositions < totalPositions) {
+            const missingCount = totalPositions - votedPositions;
+            alert(`❌ Please vote for all positions before submitting.\n\nYou still need to vote for ${missingCount} position${missingCount > 1 ? 's' : ''}.`);
+            return;
+        }
+
+        if (!confirm('Are you sure you want to submit your ballot? You cannot change your votes after submission.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/User/SubmitBallot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(`✅ ${data.message}`);
+                location.reload();
+            } else {
+                if (data.missingPositions) {
+                    alert(`❌ ${data.message}\n\nPlease vote for: ${data.missingPositions.join(', ')}`);
+                } else if (data.violations) {
+                    alert(`❌ ${data.message}\n\nViolations: ${data.violations.join(', ')}`);
+                } else {
+                    alert(`❌ ${data.message || 'Failed to submit ballot'}`);
+                }
+            }
+        } catch (error) {
+            console.error('Submit ballot error:', error);
+            alert('❌ An error occurred while submitting ballot');
+        }
+    }
+
+    // Toggle view vote section
+    function toggleVoteView() {
+        const viewVoteSection = document.getElementById('viewVoteSection');
+        const viewButton = event.target;
+
+        if (viewVoteSection && viewButton) {
+            if (viewVoteSection.style.display === 'none') {
+                viewVoteSection.style.display = 'block';
+                viewButton.innerHTML = '👁️ Hide Your Vote';
+                viewButton.style.background = 'linear-gradient(135deg, #ffa726, #ff9800)';
+            } else {
+                viewVoteSection.style.display = 'none';
+                viewButton.innerHTML = '👁️ View Your Vote';
+                viewButton.style.background = 'linear-gradient(135deg, #7e57c2, #b388ff)';
+            }
+        }
+    }
+
+    // SignalR for real-time updates
     const connection = new signalR.HubConnectionBuilder()
         .withUrl("/dashboardHub")
         .build();
 
     connection.on("ReceiveUpdate", () => {
+        console.log("Real-time update received - refreshing page");
         location.reload();
     });
 
-    connection.start()
-        .then(() => console.log("✅ SignalR connected"))
-        .catch(err => console.error("❌ SignalR connection failed:", err));
-</script>tart().catch(err => console.error(err));
+    connection.on("VotingStatusChanged", (status) => {
+        console.log("Voting status changed to:", status);
+        isVotingOpen = status === "Open";
 
+        // Update UI based on voting status
+        if (isVotingOpen) {
+            // Enable voting buttons
+            document.querySelectorAll('.select-button:not(.selected)').forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🗳️ Select</span>';
+            });
+            // Remove voting closed styles
+            document.querySelectorAll('.candidate-card.voting-closed').forEach(card => {
+                card.classList.remove('voting-closed');
+            });
+            document.querySelectorAll('.select-button.voting-closed').forEach(btn => {
+                btn.classList.remove('voting-closed');
+            });
+            // Hide voting closed message
+            hideVotingClosedMessage();
+        } else {
+            // Disable voting buttons
+            document.querySelectorAll('.select-button').forEach(btn => {
+                if (!btn.classList.contains('selected')) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span>🔒 Voting Closed</span>';
+                }
+            });
+            // Add voting closed styles
+            document.querySelectorAll('.candidate-card:not(.selected)').forEach(card => {
+                card.classList.add('voting-closed');
+            });
+            document.querySelectorAll('.select-button:not(.selected)').forEach(btn => {
+                btn.classList.add('voting-closed');
+            });
+            // Show voting closed message
+            showVotingClosedMessage();
+        }
+
+        // Update submit button
+        updateSubmitButton();
+    });
+
+    function showVotingClosedMessage() {
+        let message = document.getElementById('votingClosedMessage');
+        if (!message) {
+            message = document.createElement('div');
+            message.id = 'votingClosedMessage';
+            message.className = 'voting-closed-message';
+            message.innerHTML = '🔒 Voting is currently closed. Please wait for the admin to open voting.';
+
+            const candidateList = document.getElementById('candidateList');
+            if (candidateList) {
+                candidateList.insertBefore(message, candidateList.firstChild);
+            }
+        }
+    }
+
+    function hideVotingClosedMessage() {
+        const message = document.getElementById('votingClosedMessage');
+        if (message) {
+            message.remove();
+        }
+    }
+
+    connection.start()
+        .then(() => console.log("✅ Connected to real-time updates"))
+        .catch(err => console.error("❌ Connection failed:", err));
+
+    // Initialize UI based on current voting status
+    if (!isVotingOpen) {
+        showVotingClosedMessage();
+    }
+</script>
