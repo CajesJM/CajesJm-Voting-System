@@ -134,6 +134,7 @@
         margin-bottom: 5px;
         font-weight: 600;
         color: #333;
+        display: block;
     }
 
     input[type="text"], input[type="password"], input[type="email"], select {
@@ -198,20 +199,30 @@
         }
 
     .links {
-        margin-top: 15px;
+        margin-top: 20px;
         text-align: center;
     }
 
-        .links a {
-            text-decoration: none;
-            color: #5e35b1;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
+    .login-button {
+        display: inline-block;
+        padding: 12px 24px;
+        background: transparent;
+        color: #5e35b1;
+        border: 2px solid #5e35b1;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        width: auto;
+    }
 
-            .links a:hover {
-                color: #4527a0;
-            }
+        .login-button:hover {
+            background: #5e35b1;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(126, 87, 194, 0.4);
+        }
 
     .form-row {
         display: flex;
@@ -281,13 +292,22 @@
             <label for="showPassword">Show Password</label>
         </div>
 
-        <label asp-for="Course">Course/Program</label>
-        <input asp-for="Course" placeholder="e.g., Computer Science, Engineering" required />
+        <label asp-for="Course">Course</label>
+        <select asp-for="Course" required>
+            <option value="" disabled selected>Select your course</option>
+            <option value="Administrator">Administrator</option>
+            <option value="BSIT">BSIT</option>
+            <option value="CRIM">CRIM</option>
+            <option value="CAS">CAS</option>
+            <option value="BSOA">BSOA</option>
+            <option value="EDUC">EDUC</option>
+         
+        </select>
         <span asp-validation-for="Course" class="text-danger"></span>
 
         <label asp-for="RequestedRole">Account Type</label>
         <select asp-for="RequestedRole" required>
-            <option value="">Select account type</option>
+            <option value="" disabled selected>Select account type</option>
             <option value="User">User (Can vote)</option>
             <option value="Admin">Admin (Manage system)</option>
         </select>
@@ -296,7 +316,7 @@
         <button type="submit">Register Account</button>
 
         <div class="links">
-            <a href="/Account/Login">Already have an account? Login here</a>
+            Already have an account? <a href="/Account/Login" class="login-button">Login here</a>
         </div>
     </form>
 </div>

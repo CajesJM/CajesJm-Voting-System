@@ -1,0 +1,1105 @@
+﻿@model List<Election>
+@{
+    ViewBag.Title = "Election Management";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Election Management - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+   
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    <div class="bg-shape shape1"></div>
+    <div class="bg-shape shape2"></div>
+    <div class="bg-shape shape3"></div>
+
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1><i class="bi bi-shield-check"></i> Election Administration</h1>
+                <div class="admin-badge">Election Management</div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+   
+
+    <div class="dashboard-container">
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-circle"></i>
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+     
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                Election Management
+            </h1>
+            <div class="header-actions">
+                <a href="/Admin/Dashboard" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Dashboard
+                </a>
+                <a href="@Url.Action("CreateElection")" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    Create New Election
+                </a>
+            </div>
+        </div>
+
+        <!-- Elections Grid -->
+        <div class="elections-grid">
+            @foreach (var election in Model)
+            {
+                <div class="election-card @(election.IsActive ? "active" : election.IsCompleted ? "completed" : "upcoming")">
+                    <div class="election-header">
+                        <h3>@election.Name</h3>
+                        <span class="status-badge @(election.IsActive ? "active" : election.IsCompleted ? "completed" : "upcoming")">
+                            @if (election.IsActive)
+                            {
+                                <text>Active</text>
+                            }
+                            else if (election.IsCompleted)
+                            {
+                                <text>Completed</text>
+                            }
+                            else
+                            {
+                                <text>Upcoming</text>
+                            }
+                        </span>
+                    </div>
+
+                    <p class="election-description">@election.Description</p>
+
+                    <div class="election-dates">
+                        <div class="date-item">
+                            <i class="bi bi-play-circle"></i>
+                            <strong>Start:</strong> @election.StartDate.ToString("MMM dd, yyyy")
+                        </div>
+                        <div class="date-item">
+                            <i class="bi bi-stop-circle"></i>
+                            <strong>End:</strong> @election.EndDate.ToString("MMM dd, yyyy")
+                        </div>
+                    </div>
+
+                    <div class="election-stats">
+                        <div class="stat">
+                            <i class="bi bi-people"></i>
+                            <span>@election.Candidates.Count candidates</span>
+                        </div>
+                        <div class="stat">
+                            <i class="bi bi-check-square"></i>
+                            <span>@election.Votes.Count votes</span>
+                        </div>
+                       
+                    </div>
+
+                    <div class="election-actions">
+                        @if (!election.IsActive && !election.IsCompleted)
+                        {
+                            <button onclick="startElection(@election.Id)" class="btn btn-success btn-sm">
+                                <i class="bi bi-play-circle"></i> Start Election
+                            </button>
+                            <a href="@Url.Action("ManageElectionCandidates", new { electionId = election.Id })"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-people"></i> Manage Candidates
+                            </a>
+                            <button onclick="showDeleteModal(@election.Id, '@election.Name')" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        }
+                        else if (election.IsActive)
+                        {
+                            <button onclick="endElection(@election.Id)" class="btn btn-warning btn-sm">
+                                <i class="bi bi-stop-circle"></i> End Election
+                            </button>
+                            <a href="@Url.Action("ManageElectionCandidates", new { electionId = election.Id })"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-people"></i> View Candidates
+                            </a>
+                            <span class="stat">
+                                <i class="bi bi-people"></i>
+                                @election.Candidates.Count candidates
+                            </span>
+                        }
+                        else if (election.IsCompleted)
+                        {
+                            <a href="@Url.Action("DownloadElectionReport", new { electionId = election.Id })"
+                               class="btn btn-info btn-sm">
+                                <i class="bi bi-download"></i> Download Report
+                            </a>
+                            <a href="@Url.Action("ElectionHistory", new { electionId = election.Id })"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-graph-up"></i> View Results
+                            </a>
+                            <button onclick="showDeleteModal(@election.Id, '@election.Name')" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <h3>No Elections Yet</h3>
+                    <p>Create your first election to get started with the voting system</p>
+                    <a href="@Url.Action("CreateElection")" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create First Election
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="bi bi-exclamation-triangle"></i> Delete Election</h3>
+            <p id="deleteModalText">Are you sure you want to delete this election? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button onclick="hideDeleteModal()" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button id="confirmDeleteBtn" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Delete Election
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toast notification function
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = message;
+                toast.className = `toast toast-${type} toast-show`;
+
+                setTimeout(() => {
+                    toast.classList.remove('toast-show');
+                }, 3000);
+            }
+        }
+
+        let currentElectionId = null;
+
+        function showDeleteModal(electionId, electionName) {
+            currentElectionId = electionId;
+            const modalText = document.getElementById('deleteModalText');
+            if (modalText) {
+                modalText.textContent =
+                    `Are you sure you want to delete the election "${electionName}"? This action cannot be undone and all associated data will be permanently lost.`;
+            }
+            const modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function hideDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            currentElectionId = null;
+        }
+     
+        async function deleteElection(electionId) {
+            try {
+                console.log('=== Starting election deletion ===');
+                console.log('Election ID to delete:', electionId);
+
+                const response = await fetch('/Admin/DeleteElection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({
+                        electionId: electionId
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response OK:', response.ok);
+
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('Parsed response data:', data);
+                } catch (parseError) {
+                    console.error('Failed to parse JSON response:', parseError);
+                    throw new Error(`Server returned non-JSON response: ${responseText.substring(0, 200)}`);
+                }
+
+                if (!response.ok) {
+                    console.error('Server returned error status:', response.status);
+                    throw new Error(`Server error: ${response.status} - ${data?.message || 'Unknown error'}`);
+                }
+
+                if (data.success) {
+                    console.log('✅ Election deletion successful');
+                    showToast(' ' + data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    console.log('❌ Election deletion failed:', data.message);
+                    showToast(' ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('=== Election deletion failed ===');
+                console.error('Error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+
+                showToast(' Failed to delete election: ' + error.message, 'error');
+            }
+        }
+ 
+        function getAntiForgeryToken() {
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            return tokenElement ? tokenElement.value : '';
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', function() {
+                    if (currentElectionId) {
+                        deleteElection(currentElectionId);
+                        hideDeleteModal();
+                    }
+                });
+            }
+
+            const modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideDeleteModal();
+                    }
+                });
+            }
+
+            addAntiForgeryTokenToFetch();
+        });
+
+        function addAntiForgeryTokenToFetch() {
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+                const [url, options = {}] = args;
+
+                if (typeof url === 'string' &&
+                    url.startsWith('/') &&
+                    options.method &&
+                    options.method.toUpperCase() === 'POST') {
+
+                    options.headers = {
+                        ...options.headers,
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    };
+                }
+
+                return originalFetch.call(this, url, options);
+            };
+        }
+
+        async function startElection(electionId) {
+            console.log("Attempting to start election with ID:", electionId);
+
+            if (!confirm('Are you sure you want to start this election? This will reset voting for all users and allow them to vote again.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/Admin/StartNewElection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({ electionId: electionId })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Server response:", data);
+
+                if (data.success) {
+                    showToast('✅ ' + data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(' ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error starting election:', error);
+                showToast(' An error occurred while starting the election: ' + error.message, 'error');
+            }
+        }
+
+        async function endElection(electionId) {
+            if (!confirm('Are you sure you want to end this election? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/Admin/EndElection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({ electionId: electionId })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('✅ ' + result.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(' ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error ending election:', error);
+                showToast(' Failed to end election: ' + error.message, 'error');
+            }
+        }
+        async function debugElectionResults(electionId) {
+            try {
+                const response = await fetch('/Admin/DebugElectionResults', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({ electionId: electionId })
+                });
+
+                const result = await response.json();
+                console.log('Debug Election Results:', result);
+
+                if (result.success) {
+                    alert('Check console for debug info');
+                } else {
+                    alert('Debug failed: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Debug error:', error);
+                alert('Debug error: ' + error.message);
+            }
+        }
+                // Test function to verify endpoint connectivity
+        async function testDeleteEndpoint() {
+            try {
+                console.log('Testing delete endpoint connectivity...');
+
+                const response = await fetch('/Admin/TestDeleteEndpoint', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({
+                        electionId: 999
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Test endpoint response:', data);
+
+                if (data.success) {
+                    alert('✅ Test endpoint is working!');
+                } else {
+                    alert('❌ Test endpoint failed');
+                }
+            } catch (error) {
+                console.error('Test failed:', error);
+                alert('❌ Test endpoint error: ' + error.message);
+            }
+        }
+
+        // Call this from browser console to test
+        // testDeleteEndpoint();
+    </script>
+</body>
+</html>
+<style>
+    :root {
+        --primary: #7e57c2;
+        --primary-dark: #5e35b1;
+        --primary-light: #b388ff;
+        --secondary: #42a5f5;
+        --success: #66bb6a;
+        --warning: #ffa726;
+        --danger: #ef5350;
+        --info: #29b6f6;
+        --dark: #37474f;
+        --light: #f8f9fa;
+        --white: #ffffff;
+        --gray: #6c757d;
+        --border: #e0e0e0;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        min-height: 100vh;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .bg-shape {
+        position: fixed;
+        border-radius: 50%;
+        opacity: 0.1;
+        z-index: 0;
+        animation: float 8s infinite ease-in-out;
+    }
+
+    .shape1 {
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(45deg, var(--primary), var(--primary-light));
+        top: 10%;
+        left: 5%;
+    }
+
+    .shape2 {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(45deg, var(--success), #81c784);
+        bottom: 20%;
+        right: 10%;
+        animation-delay: 2s;
+    }
+
+    .shape3 {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(45deg, var(--info), #64b5f6);
+        top: 50%;
+        left: 80%;
+        animation-delay: 4s;
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+        }
+    }
+
+    .admin-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        padding: 1.5rem 2rem;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        z-index: 100;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+    .admin-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    .logout-btn {
+        background: var(--white);
+        color: var(--primary);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow);
+    }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: #f0f0f0;
+        }
+
+    .admin-nav {
+        background: var(--white);
+        padding: 1rem 2rem;
+        box-shadow: var(--shadow);
+        position: relative;
+        z-index: 90;
+    }
+
+    .nav-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--dark);
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+        .nav-link:hover {
+            background: var(--light);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .dashboard-title i {
+            color: var(--primary);
+        }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .btn {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: var(--shadow);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--primary-dark), #4a148c);
+        }
+
+    .btn-secondary {
+        background: var(--light);
+        color: var(--dark);
+        border: 2px solid var(--border);
+    }
+
+        .btn-secondary:hover {
+            background: var(--white);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-light);
+        }
+
+    .elections-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 2rem;
+    }
+
+    .election-card {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        border-left: 6px solid #ddd;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .election-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .election-card.active {
+            border-left-color: var(--success);
+        }
+
+        .election-card.completed {
+            border-left-color: var(--info);
+        }
+
+        .election-card.upcoming {
+            border-left-color: var(--warning);
+        }
+
+    .election-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+        .election-header h3 {
+            margin: 0;
+            color: var(--dark);
+            font-size: 1.4rem;
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+        .status-badge.active {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.completed {
+            background: var(--info);
+            color: white;
+        }
+
+        .status-badge.upcoming {
+            background: var(--warning);
+            color: white;
+        }
+
+    .election-description {
+        color: var(--gray);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    .election-dates {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .date-item {
+        font-size: 0.9rem;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .date-item i {
+            color: var(--primary);
+        }
+
+    .election-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--gray);
+        padding: 0.5rem 1rem;
+        background: var(--light);
+        border-radius: 8px;
+    }
+
+        .stat i {
+            color: var(--primary);
+        }
+
+    .election-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-sm {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+    .btn-warning {
+        background: var(--warning);
+        color: white;
+    }
+
+        .btn-warning:hover {
+            background: #e68900;
+            transform: translateY(-2px);
+        }
+
+    .btn-info {
+        background: var(--info);
+        color: white;
+    }
+
+        .btn-info:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+        }
+
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+
+    .btn-outline-primary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray);
+        grid-column: 1 / -1;
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        color: var(--primary);
+    }
+
+    .empty-state h3 {
+        margin: 0 0 1rem 0;
+        color: var(--dark);
+        font-size: 1.5rem;
+    }
+
+    .empty-state p {
+        margin: 0 0 2rem 0;
+        font-size: 1.1rem;
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border-color: var(--success);
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border-color: var(--danger);
+    }
+
+    .toast {
+        position: fixed;
+        margin-top: 40px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    }
+
+    .toast-success {
+        background: var(--success);
+    }
+
+    .toast-error {
+        background: var(--danger);
+    }
+
+    .toast-show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .debug-info {
+        background: var(--light);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+        border-left: 4px solid var(--warning);
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: var(--shadow-lg);
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+    }
+
+    .modal h3 {
+        margin-bottom: 1rem;
+        color: var(--dark);
+    }
+
+    .modal p {
+        margin-bottom: 2rem;
+        color: var(--gray);
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 1024px) {
+        .elections-grid {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .admin-header, .admin-nav {
+            padding: 1rem;
+        }
+
+        .header-content, .nav-content {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .nav-links {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dashboard-container {
+            padding: 0 1rem;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .elections-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .election-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .election-card {
+            padding: 1.5rem;
+        }
+
+        .election-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .election-dates, .election-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-content {
+            padding: 1.5rem;
+        }
+
+        .modal-actions {
+            flex-direction: column;
+        }
+    }
+</style>

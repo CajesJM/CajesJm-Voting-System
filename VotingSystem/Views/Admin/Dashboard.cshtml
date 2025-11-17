@@ -2,7 +2,678 @@
 @{
     ViewBag.Title = "Admin Dashboard";
 }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
+
+
+<div class="header">
+    <h2>Admin Dashboard </h2>
+    <div class="admin-badge"> @User.Identity.Name</div>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="logout-button">
+            <i class="bi bi-box-arrow-right"></i>
+            Logout</button>
+    </form>
+</div>
+
+<div class="dashboard-container">
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Voting Controls -->
+    <div class="voting-controls">
+        <div class="voting-status">
+            <div class="status-indicator">
+                <div id="statusDot" class="status-dot @((ViewBag.VotingStatus ?? "Closed") == "Open" ? "status-open" : "status-closed")"></div>
+                <span id="statusText">Voting is @(ViewBag.VotingStatus ?? "Closed")</span>
+            </div>
+            <div class="voting-buttons">
+                <button id="openVotingBtn" class="voting-btn btn-open">
+                    Open Voting
+                </button>
+                <button id="closeVotingBtn" class="voting-btn btn-close">
+                   Close Voting
+                </button>
+                <button id="settingsBtn" class="voting-btn btn-settings">
+                    Voting Settings
+                </button>
+            </div>
+        </div>
+
+        <div id="configPanel" class="config-panel-enhanced">
+            <div class="config-header-enhanced">
+                <div class="config-title-section">
+                    <div class="config-icon">
+                        <i class="bi bi-gear-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="config-title">Voting Configuration</h4>
+                        <p class="config-subtitle">Configure voting rules for each position</p>
+                    </div>
+                </div>
+                <button class="close-config-enhanced" onclick="closeConfigPanel()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="config-content">
+                <div class="config-info-card">
+                    <i class="bi bi-info-circle"></i>
+                    <p>Configure how many candidates users can vote for in each position.</p>
+                </div>
+
+                <div id="positionConfigs" class="position-configs-container">
+                    @{
+                        var positions = Model.Select(c => c.Position).Distinct().OrderBy(p => p);
+                        var positionSettings = ViewBag.PositionSettings as Dictionary<string, int> ?? new Dictionary<string, int>();
+                    }
+
+                    @foreach (var position in positions)
+                    {
+                        var votesAllowed = positionSettings.ContainsKey(position) ? positionSettings[position] : 1;
+                        var candidateCount = Model.Count(c => c.Position == position);
+
+                        <div class="position-config-card">
+                            <div class="position-config-header">
+                                <div class="position-info">
+                                    <div class="position-icon">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="position-details">
+                                        <h5 class="position-name">@position</h5>
+                                        <div class="position-meta">
+                                            <span class="meta-item">
+                                                <i class="bi bi-people"></i>
+                                                @candidateCount candidate@(candidateCount != 1 ? "s" : "")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="votes-control">
+                                    <label class="votes-label">Votes Allowed</label>
+                                    <div class="votes-input-container">
+                                        <button class="votes-btn votes-decrement" type="button" onclick="decrementVotes(this)">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="number"
+                                               class="votes-allowed-input-enhanced"
+                                               value="@votesAllowed"
+                                               min="1"
+                                               max="10"
+                                               data-position="@position">
+                                        <button class="votes-btn votes-increment" type="button" onclick="incrementVotes(this)">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="config-actions">
+                    <button class="config-reset-btn" onclick="resetConfig()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Reset to Default
+                    </button>
+                    <button id="saveConfigBtn" class="save-config-btn-enhanced" onclick="saveVotingConfig()">
+                        <i class="bi bi-check-lg"></i>
+                        Save Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+
+        <div class="stat-card warning">
+            <span class="stat-label">Pending Approvals</span>
+            <span class="stat-number">@(ViewBag.PendingApprovals ?? 0)</span>
+        </div>
+        <div class="stat-card info">
+            <span class="stat-label">Voting Status</span>
+            <span class="stat-number">@(ViewBag.VotingStatus ?? "Closed")</span>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-grid">
+        <a href="@Url.Action("PendingUsers")" class="action-button approval">
+            <i class="fas fa-user-clock" style="font-size: 24px;"></i>
+            Pending Approvals
+            @if (ViewBag.PendingApprovals > 0)
+            {
+                <span class="badge badge-warning">@ViewBag.PendingApprovals</span>
+            }
+        </a>
+        <a href="@Url.Action("Create")" class="action-button candidate">
+            <i class="fas fa-user-plus" style="font-size: 24px;"></i>
+            Add Candidate
+        </a>
+        <a href="@Url.Action("VoterList")" class="action-button voters">
+            <i class="fas fa-users" style="font-size: 24px;"></i>
+            View Voters
+        </a>
+        <a href="@Url.Action("VotingStatistics")" class="action-button stats">
+            <i class="fas fa-chart-bar" style="font-size: 24px;"></i>
+            View Statistics
+        </a>
+        <a href="@Url.Action("ElectionManagement")" class="action-button election">
+            <i class="bi bi-calendar-event" style="font-size: 24px;"></i>
+            Manage Elections
+        </a>
+    </div>
+
+    <div class="candidate-management-section">
+        <!-- Header Section -->
+        <div class="management-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <i class="bi bi-people-fill header-icon"></i>
+                    <div>
+                        <h2>Candidate Management</h2>
+                        <p class="header-subtitle">Manage all election candidates and their positions</p>
+                    </div>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-badge primary">
+                        <i class="bi bi-people"></i>
+                        <span>@Model.Count Total Candidates</span>
+                    </div>
+                    <a href="@Url.Action("Create")" class="add-candidate-btn">
+                        <i class="bi bi-plus-circle"></i>
+                        Add New Candidate
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @{
+            var candidatesByPosition = Model.GroupBy(c => c.Position).OrderBy(g => g.Key);
+        }
+
+        @if (!Model.Any())
+        {
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h3>No Candidates Yet</h3>
+                <p>Start building your election by adding the first candidate</p>
+                <a asp-action="Create" class="primary-btn">
+                    <i class="bi bi-plus-circle"></i>
+                    Add First Candidate
+                </a>
+            </div>
+        }
+        else
+        {
+            <!-- Positions Grid -->
+            <div class="positions-grid">
+                @foreach (var positionGroup in candidatesByPosition)
+                {
+                    var votesAllowed = ViewBag.PositionSettings != null && ((Dictionary<string, int>)ViewBag.PositionSettings).ContainsKey(positionGroup.Key)
+                    ? ((Dictionary<string, int>)ViewBag.PositionSettings)[positionGroup.Key]
+                    : 1;
+                    var totalVotes = positionGroup.Sum(c => c.VoteCount);
+                    var leadingCandidate = positionGroup.OrderByDescending(c => c.VoteCount).FirstOrDefault();
+
+                    <div class="position-card">
+                        <!-- Position Header -->
+                        <div class="position-card-header">
+                            <div class="position-info">
+                                <div class="position-icon">
+                                    <i class="bi bi-house-door-fill"></i>
+                                </div>
+                                <div class="position-details">
+                                    <h3 class="position-title">@positionGroup.Key</h3>
+                                    <div class="position-meta">
+                                        <span class="meta-item">
+                                            <i class="bi bi-people"></i>
+                                            @positionGroup.Count() candidate@(positionGroup.Count() > 1 ? "s" : "")
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="bi bi-check-square"></i>
+                                            @votesAllowed vote@(votesAllowed > 1 ? "s" : "") allowed
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="bi bi-graph-up"></i>
+                                            @totalVotes total votes
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="position-actions">
+                                @if (leadingCandidate != null)
+                                {
+                                    <div class="leading-candidate">
+                                        <i class="bi bi-trophy-fill"></i>
+                                        <div class="leading-info">
+                                            <span class="leading-name">Leading: @leadingCandidate.Name</span>
+                                            @if (!string.IsNullOrEmpty(leadingCandidate.PartyList))
+                                            {
+                                                <span class="leading-party">@leadingCandidate.PartyList</span>
+                                            }
+                                            <span class="leading-votes">@leadingCandidate.VoteCount votes</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Candidates List -->
+                        <div class="candidates-list">
+                            @foreach (var candidate in positionGroup.OrderByDescending(c => c.VoteCount))
+                            {
+                                var votePercentage = totalVotes > 0 ? (candidate.VoteCount * 100.0) / totalVotes : 0;
+
+                                <div class="candidate-item">
+                                   
+                                    <div class="candidate-avatar">
+                                        @if (!string.IsNullOrEmpty(candidate.ProfilePicture))
+                                        {
+                                            <img src="@candidate.ProfilePicture" alt="@candidate.Name" class="candidate-photo">
+                                        }
+                                        else
+                                        {
+                                            <div class="default-avatar">
+                                                <i class="bi bi-person-circle"></i>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="candidate-info">
+                                     
+                                        <div class="candidate-header">
+                                            <div class="candidate-main-info">
+                                                <h4 class="candidate-name">@candidate.Name</h4>
+                                                @if (!string.IsNullOrEmpty(candidate.PartyList))
+                                                {
+                                                    <div class="candidate-party">
+                                                     <i class="bi bi-gitlab"></i>
+                                                        @candidate.PartyList
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="candidate-votes">
+                                                <span class="vote-count">@candidate.VoteCount</span>
+                                                <span class="vote-label">vote@(candidate.VoteCount != 1 ? "s" : "")</span>
+                                            </div>
+                                        </div>
+
+                                        <p class="candidate-description">
+                                            <i class="bi bi-chat-quote"></i>
+                                            @candidate.Description
+                                        </p>
+
+                                        <div class="vote-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: @votePercentage.ToString("0")%"></div>
+                                            </div>
+                                            <span class="progress-text">@votePercentage.ToString("0.0")%</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="candidate-actions">
+                                        <a asp-action="Edit" asp-route-id="@candidate.Id" class="action-btn edit-btn" title="Edit Candidate">
+                                            <i class="bi bi-feather"></i>
+                                            <span>Edit</span>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@candidate.Id" class="action-btn delete-btn" title="Delete Candidate">
+                                            <i class="bi bi-trash"></i>
+                                            <span>Delete</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="statistics-summary">
+                <div class="summary-header">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    <h3>Election Overview</h3>
+                </div>
+                <div class="stats-grid">
+                    <div class="summary-stat">
+                        <div class="stat-icon total-candidates">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value">@Model.Count</span>
+                            <span class="stat-label">Total Candidates</span>
+                        </div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="stat-icon total-positions">
+                            <i class="bi bi-house-door-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value">@candidatesByPosition.Count()</span>
+                            <span class="stat-label">Positions</span>
+                        </div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="stat-icon total-votes">
+                            <i class="bi bi-check-square-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value">@Model.Sum(c => c.VoteCount)</span>
+                            <span class="stat-label">Total Votes</span>
+                        </div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="stat-icon leading-position">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            @{
+                                var mostContested = candidatesByPosition.OrderByDescending(g => g.Count()).FirstOrDefault();
+                            }
+                            <span class="stat-value">@(mostContested?.Count() ?? 0)</span>
+                            <span class="stat-label">Most in @(mostContested?.Key ?? "N/A")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="position-breakdown">
+                    <h4>Position Breakdown</h4>
+                    <div class="breakdown-grid">
+                        @foreach (var positionGroup in candidatesByPosition)
+                        {
+                            var totalPositionVotes = positionGroup.Sum(c => c.VoteCount);
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="position-name">@positionGroup.Key</span>
+                                    <span class="position-count">@positionGroup.Count()</span>
+                                </div>
+                                <div class="breakdown-stats">
+                                    <span class="stat">
+                                        <i class="bi bi-people"></i>
+                                        @positionGroup.Count() candidates
+                                    </span>
+                                    <span class="stat">
+                                        <i class="bi bi-check-circle"></i>
+                                        @totalPositionVotes votes
+                                    </span>
+                                </div>
+                                <div class="breakdown-progress">
+                                    @{
+                                        var maxVotes = candidatesByPosition.Max(g => g.Sum(c => c.VoteCount));
+                                        var widthPercentage = maxVotes > 0 ? (totalPositionVotes * 100) / maxVotes : 0;
+                                    }
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: @widthPercentage%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+   
+    function initializeVotingButtons() {
+        const currentStatus = '@(ViewBag.VotingStatus ?? "Closed")';
+        updateVotingStatus(currentStatus);
+    }
+
+ 
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeVotingButtons();
+    });
+    function incrementVotes(button) {
+           const input = button.parentElement.querySelector('.votes-allowed-input-enhanced');
+           if (parseInt(input.value) < parseInt(input.max)) {
+               input.value = parseInt(input.value) + 1;
+           }
+       }
+
+       function decrementVotes(button) {
+           const input = button.parentElement.querySelector('.votes-allowed-input-enhanced');
+           if (parseInt(input.value) > parseInt(input.min)) {
+               input.value = parseInt(input.value) - 1;
+           }
+       }
+
+       function resetConfig() {
+           const inputs = document.querySelectorAll('.votes-allowed-input-enhanced');
+           inputs.forEach(input => {
+               input.value = 1;
+           });
+
+          
+           showToast('Configuration reset to default values', 'success');
+       }
+
+    // Toast notification function
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `toast toast-${type} toast-show`;
+        console.log(`${type.toUpperCase()}: ${message}`);
+
+        setTimeout(() => {
+            toast.classList.remove('toast-show');
+        }, 3000);
+    }
+
+    // Voting status controls
+    document.getElementById('openVotingBtn').addEventListener('click', openVoting);
+    document.getElementById('closeVotingBtn').addEventListener('click', closeVoting);
+    document.getElementById('settingsBtn').addEventListener('click', toggleConfigPanel);
+
+        async function openVoting() {
+        const openBtn = document.getElementById('openVotingBtn');
+        const closeBtn = document.getElementById('closeVotingBtn');
+
+        if (!confirm('Are you sure you want to open voting? This will allow all users to cast their votes.')) {
+            return;
+        }
+
+        // Show loading state
+        openBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Opening...';
+        openBtn.disabled = true;
+
+        try {
+            const response = await fetch('/Admin/OpenVoting', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showToast('✅ Voting has been opened successfully!', 'success');
+                updateVotingStatus('Open');
+                connection.invoke("SendVotingStatusUpdate", "Open").catch(err => console.error(err));
+            } else {
+                showToast(`❌ ${data.message}`, 'error');
+                // Reset button on error
+                openBtn.innerHTML = '<i class="bi bi-circle-fill"></i> Open Voting';
+                openBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error opening voting:', error);
+            showToast('❌ An error occurred while opening voting', 'error');
+            // Reset button on error
+            openBtn.innerHTML = '<i class="bi bi-circle-fill"></i> Open Voting';
+            openBtn.disabled = false;
+        }
+    }
+
+    async function closeVoting() {
+        const openBtn = document.getElementById('openVotingBtn');
+        const closeBtn = document.getElementById('closeVotingBtn');
+
+        if (!confirm('Are you sure you want to close voting? Users will no longer be able to cast or change votes.')) {
+            return;
+        }
+
+        // Show loading state
+        closeBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Closing...';
+        closeBtn.disabled = true;
+
+        try {
+            const response = await fetch('/Admin/CloseVoting', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showToast('🔒 Voting has been closed successfully!', 'success');
+                updateVotingStatus('Closed');
+                connection.invoke("SendVotingStatusUpdate", "Closed").catch(err => console.error(err));
+            } else {
+                showToast(`❌ ${data.message}`, 'error');
+                // Reset button on error
+                closeBtn.innerHTML = '<i class="bi bi-lock-fill"></i> Close Voting';
+                closeBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error closing voting:', error);
+            showToast('❌ An error occurred while closing voting', 'error');
+            // Reset button on error
+            closeBtn.innerHTML = '<i class="bi bi-lock-fill"></i> Close Voting';
+            closeBtn.disabled = false;
+        }
+    }
+
+    function updateVotingStatus(status) {
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const openBtn = document.getElementById('openVotingBtn');
+        const closeBtn = document.getElementById('closeVotingBtn');
+
+        if (status === 'Open') {
+            statusDot.className = 'status-dot status-open';
+            statusText.textContent = 'Voting is Open';
+
+            // Update buttons with proper states
+            openBtn.disabled = true;
+            openBtn.innerHTML = 'Open Voting';
+            closeBtn.disabled = false;
+            closeBtn.innerHTML = 'Close Voting';
+        } else {
+            statusDot.className = 'status-dot status-closed';
+            statusText.textContent = 'Voting is Closed';
+
+            // Update buttons with proper states
+            openBtn.disabled = false;
+            openBtn.innerHTML = 'Open Voting';
+            closeBtn.disabled = true;
+            closeBtn.innerHTML = 'Close Voting';
+        }
+
+        console.log(`Voting status updated to: ${status}`);
+        console.log(`Open button disabled: ${openBtn.disabled}`);
+        console.log(`Close button disabled: ${closeBtn.disabled}`);
+    }
+
+    function toggleConfigPanel() {
+        const configPanel = document.getElementById('configPanel');
+        configPanel.style.display = configPanel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function closeConfigPanel() {
+        document.getElementById('configPanel').style.display = 'none';
+    }
+
+           async function saveVotingConfig() {
+        const saveBtn = document.getElementById('saveConfigBtn');
+        const originalText = saveBtn.innerHTML;
+
+        saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+        saveBtn.disabled = true;
+
+        const configs = {};
+        const inputs = document.querySelectorAll('.votes-allowed-input-enhanced');
+
+        let validationErrors = [];
+
+        inputs.forEach(input => {
+            const position = input.getAttribute('data-position');
+            const votesAllowed = parseInt(input.value);
+            const candidateCount = parseInt(input.closest('.position-config-card')
+                .querySelector('.meta-item').textContent.match(/\d+/)[0]);
+
+            if (votesAllowed > candidateCount) {
+                validationErrors.push(`${position}: ${votesAllowed} votes > ${candidateCount} candidates`);
+            } else if (votesAllowed > 0) {
+                configs[position] = votesAllowed;
+            }
+        });
+
+        if (validationErrors.length > 0) {
+            showToast(` Validation errors: ${validationErrors.join('; ')}`, 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            return;
+        }
+
+        try {
+            const response = await fetch('/Admin/SaveVotingConfig', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(configs)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showToast('✅ Voting configuration saved successfully!', 'success');
+                closeConfigPanel();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(` ${data.message}`, 'error');
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error saving config:', error);
+            showToast(' An error occurred while saving configuration', 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }
+    // SignalR connection for real-time updates
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/dashboardHub")
+        .build();
+
+    connection.on("ReceiveUpdate", () => {
+        console.log("SignalR update received — refreshing dashboard");
+        window.location.reload();
+    });
+
+    connection.on("VotingStatusChanged", (status) => {
+        console.log("Voting status changed to:", status);
+        updateVotingStatus(status);
+        showToast(`Voting is now ${status}`, 'success');
+    });
+
+    connection.start().catch(err => console.error(err.toString()));
+</script>
 <style>
     body {
         font-family: 'Poppins', sans-serif;
@@ -109,6 +780,17 @@
         gap: 15px;
         margin-bottom: 30px;
     }
+
+    .voting-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+        .voting-btn:disabled:hover {
+            transform: none !important;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1) !important;
+        }
 
     .action-button {
         display: flex;
@@ -355,92 +1037,368 @@
             transform: translateY(-2px);
         }
 
-    /* Configuration Panel */
-    .config-panel {
-        background: #fff;
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    .config-panel-enhanced {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        margin-top: 25px;
+        border: 1px solid #f0f0f0;
         display: none;
+        animation: slideInUp 0.3s ease-out;
     }
 
-    .config-header {
-        display: flex;
-        justify-content: between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #f0f0f0;
+    @@keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    .config-title {
-        color: #5e35b1;
-        margin: 0;
-        font-size: 1.3em;
-    }
-
-    .close-config {
-        background: #f44336;
+    .config-header-enhanced {
+        background: linear-gradient(135deg, #7e57c2 0%, #5e35b1 100%);
         color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9em;
-    }
-
-    .position-config {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        border-left: 4px solid #7e57c2;
-    }
-
-    .position-header-config {
+        padding: 1.5rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+    }
+
+    .config-title-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .config-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .config-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .config-subtitle {
+        margin: 0.25rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+    .close-config-enhanced {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+        .close-config-enhanced:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+    .config-content {
+        padding: 2rem;
+    }
+
+    .admin-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        margin-left: -1000px;
+    }
+    .config-info-card {
+        background: #f0f4ff;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #7e57c2;
+    }
+
+        .config-info-card i {
+            color: #7e57c2;
+            font-size: 1.2rem;
+            margin-top: 0.1rem;
+        }
+
+        .config-info-card p {
+            margin: 0;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+    .position-configs-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .position-config-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+        .position-config-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: #d0d7ff;
+        }
+
+    .position-config-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .position-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .position-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .position-details {
+        flex: 1;
     }
 
     .position-name {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .position-meta {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .votes-control {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .votes-label {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .votes-input-container {
+        display: flex;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+        .votes-input-container:focus-within {
+            border-color: #7e57c2;
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
+        }
+
+    .votes-btn {
+        background: #ffffff;
+        border: none;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #7e57c2;
+        font-size: 1rem;
+    }
+
+        .votes-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .votes-btn:active {
+            background: #e0e0e0;
+        }
+
+    .votes-allowed-input-enhanced {
+        width: 60px;
+        height: 40px;
+        border: none;
+        text-align: center;
+        font-size: 1.1rem;
         font-weight: 600;
         color: #333;
-        font-size: 1.1em;
+        background: transparent;
+        -moz-appearance: textfield;
     }
 
-    .votes-allowed-input {
-        width: 80px;
-        padding: 8px 12px;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        font-size: 1em;
-        text-align: center;
-    }
+        .votes-allowed-input-enhanced::-webkit-outer-spin-button,
+        .votes-allowed-input-enhanced::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
-        .votes-allowed-input:focus {
-            border-color: #7e57c2;
+        .votes-allowed-input-enhanced:focus {
             outline: none;
         }
 
-    .save-config-btn {
-        background: #4CAF50;
-        color: white;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 8px;
+    .config-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .config-reset-btn {
+        background: #f8f9fa;
+        color: #666;
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-        .save-config-btn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
+        .config-reset-btn:hover {
+            background: #e9ecef;
+            color: #333;
         }
+
+    .save-config-btn-enhanced {
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+        .save-config-btn-enhanced:hover {
+            background: linear-gradient(135deg, #45a049, #5cb860);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .save-config-btn-enhanced:active {
+            transform: translateY(0);
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .config-header-enhanced {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .config-content {
+            padding: 1.5rem;
+        }
+
+        .position-config-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1.25rem;
+        }
+
+        .votes-control {
+            width: 100%;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-actions {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .config-reset-btn,
+        .save-config-btn-enhanced {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .position-info {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .position-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
 
     /* Toast Notifications */
     .toast {
@@ -508,375 +1466,709 @@
         }
     }
 </style>
-
-<div class="header">
-    <h2>Admin Panel</h2>
-    <form asp-controller="Account" asp-action="Logout" method="post">
-        <button type="submit" class="logout-button">Logout</button>
-    </form>
-</div>
-
-<div class="dashboard-container">
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
-
-    <!-- Voting Controls -->
-    <div class="voting-controls">
-        <div class="voting-status">
-            <div class="status-indicator">
-                <div id="statusDot" class="status-dot @((ViewBag.VotingStatus ?? "Closed") == "Open" ? "status-open" : "status-closed")"></div>
-                <span id="statusText">Voting is @(ViewBag.VotingStatus ?? "Closed")</span>
-            </div>
-            <div class="voting-buttons">
-                <button id="openVotingBtn" class="voting-btn btn-open" @((ViewBag.VotingStatus ?? "Closed") == "Open" ? "disabled" : "")>
-                    📊 Open Voting
-                </button>
-                <button id="closeVotingBtn" class="voting-btn btn-close" @((ViewBag.VotingStatus ?? "Closed") == "Closed" ? "disabled" : "")>
-                    🔒 Close Voting
-                </button>
-                <button id="settingsBtn" class="voting-btn btn-settings">
-                    ⚙️ Voting Settings
-                </button>
-            </div>
-        </div>
-
-        <!-- Voting Configuration Panel -->
-        <div id="configPanel" class="config-panel">
-            <div class="config-header">
-                <h4 class="config-title">Voting Configuration</h4>
-                <button class="close-config" onclick="closeConfigPanel()">✕ Close</button>
-            </div>
-
-            <p style="color: #666; margin-bottom: 20px;">
-                Configure how many candidates users can vote for in each position.
-            </p>
-
-            <div id="positionConfigs">
-                @{
-                    var positions = Model.Select(c => c.Position).Distinct().OrderBy(p => p);
-                    var positionSettings = ViewBag.PositionSettings as Dictionary<string, int> ?? new Dictionary<string, int>();
-                }
-
-                @foreach (var position in positions)
-                {
-                    var votesAllowed = positionSettings.ContainsKey(position) ? positionSettings[position] : 1;
-                    <div class="position-config">
-                        <div class="position-header-config">
-                            <span class="position-name">🏛️ @position</span>
-                            <div>
-                                <label style="margin-right: 10px; color: #666;">Votes Allowed:</label>
-                                <input type="number"
-                                       class="votes-allowed-input"
-                                       value="@votesAllowed"
-                                       min="1"
-                                       max="10"
-                                       data-position="@position">
-                            </div>
-                        </div>
-                        <div style="color: #666; font-size: 0.9em; margin-top: 5px;">
-                            @Model.Count(c => c.Position == position) candidate(s) available
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <button id="saveConfigBtn" class="save-config-btn" onclick="saveVotingConfig()">
-                💾 Save Configuration
-            </button>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-        <div class="stat-card primary">
-            <span class="stat-label">Total Candidates</span>
-            <span class="stat-number">@Model.Count</span>
-        </div>
-        <div class="stat-card success">
-            <span class="stat-label">Total Votes</span>
-            <span class="stat-number">@(ViewBag.TotalVotes ?? 0)</span>
-        </div>
-        <div class="stat-card warning">
-            <span class="stat-label">Pending Approvals</span>
-            <span class="stat-number">@(ViewBag.PendingApprovals ?? 0)</span>
-        </div>
-        <div class="stat-card info">
-            <span class="stat-label">Voting Status</span>
-            <span class="stat-number">@(ViewBag.VotingStatus ?? "Closed")</span>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="actions-grid">
-        <a href="@Url.Action("PendingUsers")" class="action-button approval">
-            <i class="fas fa-user-clock" style="font-size: 24px;"></i>
-            Pending Approvals
-            @if (ViewBag.PendingApprovals > 0)
-            {
-                <span class="badge badge-warning">@ViewBag.PendingApprovals</span>
-            }
-        </a>
-        <a href="@Url.Action("Create")" class="action-button candidate">
-            <i class="fas fa-user-plus" style="font-size: 24px;"></i>
-            Add Candidate
-        </a>
-        <a href="@Url.Action("VoterList")" class="action-button voters">
-            <i class="fas fa-users" style="font-size: 24px;"></i>
-            View Voters
-        </a>
-        <a href="@Url.Action("VotingStatistics")" class="action-button stats">
-            <i class="fas fa-chart-bar" style="font-size: 24px;"></i>
-            View Statistics
-        </a>
-    </div>
-
-    <!-- Candidate Management -->
-    <div class="table-container">
-        <h3 style="margin-top: 0; color: #7e57c2; display: flex; justify-content: space-between; align-items: center;">
-            <span>Candidate Management</span>
-            <span class="stat-label">Total: @Model.Count candidates</span>
-        </h3>
-
-        @{
-            var candidatesByPosition = Model.GroupBy(c => c.Position).OrderBy(g => g.Key);
-        }
-
-        @if (!Model.Any())
-        {
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <div style="font-size: 3em; margin-bottom: 15px;">👥</div>
-                <h4>No Candidates Yet</h4>
-                <p>Get started by adding the first candidate to the election.</p>
-                <a asp-action="Create" class="add" style="margin-top: 15px;">Add First Candidate</a>
-            </div>
-        }
-        else
-        {
-            foreach (var positionGroup in candidatesByPosition)
-            {
-                <div class="position-section" style="margin-bottom: 30px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
-                    <div class="position-header" style="background: linear-gradient(135deg, #7e57c2, #9575cd); color: white; padding: 15px 20px;">
-                        <h4 style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
-                            <span>🏛️ @positionGroup.Key</span>
-                            <span style="font-size: 0.9em; opacity: 0.9;">
-                                @positionGroup.Count() candidate@(positionGroup.Count() > 1 ? "s" : "")
-                                @{
-                                    var votesAllowed = ViewBag.PositionSettings != null && ((Dictionary<string, int>)ViewBag.PositionSettings).ContainsKey(positionGroup.Key)
-                                    ? ((Dictionary<string, int>)ViewBag.PositionSettings)[positionGroup.Key]
-                                    : 1;
-                                }
-                                <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; margin-left: 10px;">
-                                    @votesAllowed vote@(votesAllowed > 1 ? "s" : "") allowed
-                                </span>
-                            </span>
-                        </h4>
-                    </div>
-
-                    <div class="candidates-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding: 20px; background: #fafafa;">
-                        @foreach (var candidate in positionGroup.OrderByDescending(c => c.VoteCount))
-                        {
-                            <div class="candidate-card" style="background: white; border-radius: 10px; padding: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); transition: transform 0.2s ease;">
-                                <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 10px;">
-                                    <div style="flex: 1;">
-                                        <h5 style="margin: 0 0 5px 0; color: #333; font-size: 1.1em;">@candidate.Name</h5>
-                                        <p style="margin: 0; color: #666; font-size: 0.9em; line-height: 1.3;">@candidate.Description</p>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div class="vote-count" style="background: linear-gradient(135deg, #66bb6a, #4caf50); color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold; font-size: 0.9em;">
-                                            @candidate.VoteCount vote@(candidate.VoteCount != 1 ? "s" : "")
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style="display: flex; gap: 8px; margin-top: 12px;">
-                                    <a asp-action="Edit" asp-route-id="@candidate.Id" class="button edit" style="flex: 1; text-align: center; padding: 6px 12px;">
-                                        Edit
-                                    </a>
-                                    <a asp-action="Delete" asp-route-id="@candidate.Id" class="button delete" style="flex: 1; text-align: center; padding: 6px 12px;">
-                                        Delete
-                                    </a>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px;">
-                <h5 style="margin: 0 0 10px 0; color: #5e35b1;">📊 Position Summary</h5>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                    @foreach (var positionGroup in candidatesByPosition)
-                    {
-                        <div style="background: white; padding: 10px 15px; border-radius: 6px; border-left: 4px solid #7e57c2;">
-                            <div style="font-weight: 600; color: #333;">@positionGroup.Key</div>
-                            <div style="color: #666; font-size: 0.9em;">
-                                @positionGroup.Count() candidate@(positionGroup.Count() > 1 ? "s" : ""),
-                                @positionGroup.Sum(c => c.VoteCount) total votes
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-<script>
-    // Toast notification function
-    function showToast(message, type) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.className = `toast toast-${type} toast-show`;
-
-        setTimeout(() => {
-            toast.classList.remove('toast-show');
-        }, 3000);
+<style>
+    /* Enhanced Candidate Management Styles */
+    .candidate-management-section {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 2rem;
     }
 
-    // Voting status controls
-    document.getElementById('openVotingBtn').addEventListener('click', openVoting);
-    document.getElementById('closeVotingBtn').addEventListener('click', closeVoting);
-    document.getElementById('settingsBtn').addEventListener('click', toggleConfigPanel);
+    /* Header Styles */
+    .management-header {
+        background: linear-gradient(135deg, #7e57c2 0%, #5e35b1 100%);
+        color: white;
+        padding: 2rem;
+    }
 
-    async function openVoting() {
-        if (!confirm('Are you sure you want to open voting? This will allow all users to cast their votes.')) {
-            return;
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        font-size: 2.5rem;
+        opacity: 0.9;
+    }
+
+    .header-title h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    .header-subtitle {
+        margin: 0.25rem 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .header-stats {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        font-weight: 600;
+    }
+
+        .stat-badge.primary {
+            background: rgba(255, 255, 255, 0.2);
         }
 
-        try {
-            const response = await fetch('/Admin/OpenVoting', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+    .add-candidate-btn {
+        background: #ffffff;
+        color: #7e57c2;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
 
-            const data = await response.json();
+        .add-candidate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: #5e35b1;
+        }
 
-            if (response.ok) {
-                showToast('✅ Voting has been opened successfully!', 'success');
-                updateVotingStatus('Open');
-                // Notify all connected clients via SignalR
-                connection.invoke("SendVotingStatusUpdate", "Open").catch(err => console.error(err));
-            } else {
-                showToast(`❌ ${data.message}`, 'error');
-            }
-        } catch (error) {
-            console.error('Error opening voting:', error);
-            showToast('❌ An error occurred while opening voting', 'error');
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #666;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        font-size: 1.5rem;
+    }
+
+    .empty-state p {
+        margin: 0 0 2rem 0;
+        font-size: 1.1rem;
+    }
+
+    .primary-btn {
+        background: #7e57c2;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+        .primary-btn:hover {
+            background: #5e35b1;
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+
+    /* Positions Grid */
+    .positions-grid {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .position-card {
+        background: #f8f9fa;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+        .position-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+    /* Position Header */
+    .position-card-header {
+        background: white;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .position-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .position-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .position-details {
+        flex: 1;
+    }
+
+    .position-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .position-meta {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .position-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .leading-candidate {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #fff3cd;
+        color: #856404;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Candidates List */
+    .candidates-list {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .candidate-item {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+        .candidate-item:hover {
+            border-color: #7e57c2;
+            box-shadow: 0 4px 12px rgba(126, 87, 194, 0.1);
+        }
+
+    .candidate-avatar {
+        width: 50px;
+        height: 50px;
+        background: #f8f9fa;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #7e57c2;
+        flex-shrink: 0;
+    }
+
+    .candidate-info {
+        flex: 1;
+    }
+
+    .candidate-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .candidate-name {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .candidate-votes {
+        text-align: right;
+    }
+
+    .vote-count {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #4caf50;
+    }
+
+    .vote-label {
+        font-size: 0.8rem;
+        color: #666;
+        text-transform: lowercase;
+    }
+
+    .candidate-description {
+        margin: 0 0 1rem 0;
+        color: #666;
+        line-height: 1.5;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .vote-progress {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #66bb6a);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #666;
+        min-width: 40px;
+    }
+
+    .candidate-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .edit-btn {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+        .edit-btn:hover {
+            background: #bbdefb;
+            text-decoration: none;
+            color: #1565c0;
+        }
+
+    .delete-btn {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+        .delete-btn:hover {
+            background: #ffcdd2;
+            text-decoration: none;
+            color: #c62828;
+        }
+
+    /* Statistics Summary */
+    .statistics-summary {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .summary-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+        .summary-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-stat {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .total-candidates {
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+    }
+
+    .total-positions {
+        background: linear-gradient(135deg, #42a5f5, #64b5f6);
+    }
+
+    .total-votes {
+        background: linear-gradient(135deg, #66bb6a, #81c784);
+    }
+
+    .leading-position {
+        background: linear-gradient(135deg, #ffa726, #ffb74d);
+    }
+
+    .stat-info {
+        flex: 1;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #333;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    /* Position Breakdown */
+    .position-breakdown {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+    }
+
+        .position-breakdown h4 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+    .breakdown-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .breakdown-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .breakdown-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex: 1;
+    }
+
+    .position-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .position-count {
+        background: #7e57c2;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .breakdown-stats {
+        display: flex;
+        gap: 1rem;
+        margin-right: 1rem;
+    }
+
+        .breakdown-stats .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+    .breakdown-progress {
+        width: 100px;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-stats {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .position-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .candidate-item {
+            flex-direction: column;
+        }
+
+        .candidate-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .candidate-votes {
+            text-align: left;
+            margin-top: 0.5rem;
+        }
+
+        .candidate-actions {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .breakdown-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .breakdown-stats {
+            margin-right: 0;
+            margin: 0.5rem 0;
+        }
+
+        .breakdown-progress {
+            width: 100%;
         }
     }
 
-    async function closeVoting() {
-        if (!confirm('Are you sure you want to close voting? Users will no longer be able to cast or change votes.')) {
-            return;
+    @@media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
         }
 
-        try {
-            const response = await fetch('/Admin/CloseVoting', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+        .position-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-            const data = await response.json();
-
-            if (response.ok) {
-                showToast('🔒 Voting has been closed successfully!', 'success');
-                updateVotingStatus('Closed');
-                // Notify all connected clients via SignalR
-                connection.invoke("SendVotingStatusUpdate", "Closed").catch(err => console.error(err));
-            } else {
-                showToast(`❌ ${data.message}`, 'error');
-            }
-        } catch (error) {
-            console.error('Error closing voting:', error);
-            showToast('❌ An error occurred while closing voting', 'error');
+        .breakdown-stats {
+            flex-direction: column;
+            gap: 0.5rem;
         }
     }
+    /* Profile Picture Styles */
+    .candidate-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
 
-    function updateVotingStatus(status) {
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const openBtn = document.getElementById('openVotingBtn');
-        const closeBtn = document.getElementById('closeVotingBtn');
+    .default-avatar {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #7e57c2, #b388ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
 
-        if (status === 'Open') {
-            statusDot.className = 'status-dot status-open';
-            statusText.textContent = 'Voting is Open';
-            openBtn.disabled = true;
-            closeBtn.disabled = false;
-        } else {
-            statusDot.className = 'status-dot status-closed';
-            statusText.textContent = 'Voting is Closed';
-            openBtn.disabled = false;
-            closeBtn.disabled = true;
+    
+    .candidate-main-info {
+        flex: 1;
+    }
+
+    .candidate-party {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        background: #f0f0f0;
+        border-radius: 12px;
+        width: fit-content;
+        margin-left: -10px;
+    }
+
+        .candidate-party i {
+            color: #7e57c2;
+            font-size: 0.75rem;
         }
+
+    
+    .candidate-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+        gap: 1rem;
     }
 
-    function toggleConfigPanel() {
-        const configPanel = document.getElementById('configPanel');
-        configPanel.style.display = configPanel.style.display === 'block' ? 'none' : 'block';
+    .candidate-main-info {
+        flex: 1;
     }
 
-    function closeConfigPanel() {
-        document.getElementById('configPanel').style.display = 'none';
+    .candidate-votes {
+        text-align: right;
+        flex-shrink: 0;
     }
 
-    async function saveVotingConfig() {
-        const configs = {};
-        const inputs = document.querySelectorAll('.votes-allowed-input');
-
-        inputs.forEach(input => {
-            const position = input.getAttribute('data-position');
-            const votesAllowed = parseInt(input.value);
-            if (votesAllowed > 0) {
-                configs[position] = votesAllowed;
-            }
-        });
-
-        try {
-            const response = await fetch('/Admin/SaveVotingConfig', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(configs)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                showToast('✅ Voting configuration saved successfully!', 'success');
-                closeConfigPanel();
-                // Refresh the page to show updated configuration
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showToast(`❌ ${data.message}`, 'error');
-            }
-        } catch (error) {
-            console.error('Error saving config:', error);
-            showToast('❌ An error occurred while saving configuration', 'error');
-        }
+    .leading-candidate {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: #fff3cd;
+        color: #856404;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
     }
 
-    // SignalR connection for real-time updates
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/dashboardHub")
-        .build();
+    .leading-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
 
-    connection.on("ReceiveUpdate", () => {
-        console.log("SignalR update received — refreshing dashboard");
-        window.location.reload();
-    });
+    .leading-name {
+        font-weight: 600;
+    }
 
-    connection.on("VotingStatusChanged", (status) => {
-        console.log("Voting status changed to:", status);
-        updateVotingStatus(status);
-        showToast(`Voting is now ${status}`, 'success');
-    });
+    .leading-party {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        font-weight: normal;
+    }
 
-    connection.start().catch(err => console.error(err.toString()));
-</script>
+    .leading-votes {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        font-weight: normal;
+    }
+
+    .action-button.election {
+        background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        color: white;
+    }
+
+    .action-button.history {
+        background: linear-gradient(135deg, #607d8b, #455a64);
+        color: white;
+    }
+</style>

@@ -12,5 +12,9 @@
         public bool IsApproved { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public bool HasVoted { get; set; } = false;
+
+       
+        public DateTime? LastVotedElectionDate { get; set; }
+        public string ProfilePicture { get; set; } = "/images/default-avatar.png";
     }
 }

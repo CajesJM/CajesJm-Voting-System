@@ -1,311 +1,901 @@
 ﻿@model VotingSystem.Models.Candidate
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Candidate - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        /* Critical Alert Styles - Add these first */
+        .global-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            z-index: 10000;
+            min-width: 400px;
+            max-width: 90%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.4s ease;
+            opacity: 0;
+        }
+
+            .global-alert.show {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 1;
+            }
+
+            .global-alert.success {
+                background: #4caf50;
+                color: white;
+                border-left: 4px solid #2e7d32;
+            }
+
+            .global-alert.error {
+                background: #f44336;
+                color: white;
+                border-left: 4px solid #c62828;
+            }
+
+            .global-alert.warning {
+                background: #ff9800;
+                color: white;
+                border-left: 4px solid #ef6c00;
+            }
+
+            .global-alert.info {
+                background: #2196f3;
+                color: white;
+                border-left: 4px solid #1565c0;
+            }
+
+        .alert-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .alert-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+            .alert-close:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+        /* Field Error Styles */
+        .field-error {
+            display: block;
+            color: #f44336;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background: #ffebee;
+            border-radius: 4px;
+            border-left: 3px solid #f44336;
+            animation: slideIn 0.3s ease;
+        }
+
+        .input-error {
+            border-color: #f44336 !important;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
+        }
+
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Validation Summary */
+        .validation-summary {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+            .validation-summary h4 {
+                color: #c62828;
+                margin: 0 0 10px 0;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .validation-summary ul {
+                margin: 0;
+                padding-left: 20px;
+                color: #c62828;
+            }
+
+            .validation-summary li {
+                margin-bottom: 5px;
+            }
+    </style>
+</head>
+<body>
+    <div class="bg-shape shape1"></div>
+    <div class="bg-shape shape2"></div>
+    <div class="bg-shape shape3"></div>
+
+    <!-- Global Alert Container -->
+    <div id="globalAlert"></div>
+
+    <div class="admin-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1><i class="bi bi-shield-check"></i> Election Administration</h1>
+                <div class="admin-badge">Add Candidate</div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="create-container">
+        <div class="create-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <h2>Add New Candidate</h2>
+                <p class="card-subtitle">Create a new candidate for the election ballot</p>
+            </div>
+
+            <div class="card-content">
+                <!-- Server-side Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="validation-summary">
+                        <h4>
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Please fix the following errors:
+                        </h4>
+                        <div asp-validation-summary="All"></div>
+                    </div>
+                }
+
+                <!-- TempData Messages -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            showGlobalAlert('@TempData["SuccessMessage"]', 'success');
+                        });
+                    </script>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            showGlobalAlert('@TempData["ErrorMessage"]', 'error');
+                        });
+                    </script>
+                }
+
+                <div class="content-grid">
+                    <!-- Quick Reference Section -->
+                    <div class="reference-section">
+                        <h3 class="section-title">Quick Reference</h3>
+
+                        <div class="quick-stats">
+                            <div class="stat-item">
+                                <i class="bi bi-person stat-icon" style="color: var(--primary);"></i>
+                                <div class="stat-content">
+                                    <div class="stat-label">New Candidate</div>
+                                    <div class="stat-desc">Enter full legal name</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <i class="bi bi-house-door stat-icon" style="color: var(--info);"></i>
+                                <div class="stat-content">
+                                    <div class="stat-label">Position</div>
+                                    <div class="stat-desc">Specific role title</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <i class="bi bi-people stat-icon" style="color: var(--success);"></i>
+                                <div class="stat-content">
+                                    <div class="stat-label">Party List</div>
+                                    <div class="stat-desc">Political affiliation</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <i class="bi bi-image stat-icon" style="color: var(--warning);"></i>
+                                <div class="stat-content">
+                                    <div class="stat-label">Profile Photo</div>
+                                    <div class="stat-desc">Professional headshot</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Tips -->
+                        <div class="form-tips">
+                            <h4><i class="bi bi-arrow-down-right-circle"></i> Tips for creating effective candidates:</h4>
+                            <ul>
+                                <li>Use full names for better identification</li>
+                                <li>Be specific with position titles</li>
+                                <li>Include party affiliation for better organization</li>
+                                <li>Upload a clear, professional profile picture</li>
+                                <li>Include relevant qualifications and experience</li>
+                                <li>Keep descriptions concise but informative</li>
+                            </ul>
+                        </div>
+
+                        <!-- Requirements Checklist -->
+                        <div class="requirements-checklist">
+                            <h4><i class="bi bi-check-circle"></i> Required Fields:</h4>
+                            <ul>
+                                <li class="requirement-item">
+                                    <i class="bi bi-check requirement-check"></i>
+                                    <span>Candidate Name</span>
+                                </li>
+                                <li class="requirement-item">
+                                    <i class="bi bi-check requirement-check"></i>
+                                    <span>Position</span>
+                                </li>
+                                <li class="requirement-item">
+                                    <i class="bi bi-check requirement-check"></i>
+                                    <span>Party List</span>
+                                </li>
+                                <li class="requirement-item">
+                                    <i class="bi bi-check requirement-check"></i>
+                                    <span>Description</span>
+                                </li>
+                                <li class="requirement-item">
+                                    <i class="bi bi-check requirement-check"></i>
+                                    <span>Profile Picture (Recommended)</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Create Form Section -->
+                    <div class="create-form-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-pencil-square"></i>
+                            Candidate Details
+                        </h3>
+
+                        <form asp-action="Create" method="post" id="createForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="bi bi-image"></i>
+                                    Profile Picture *
+                                </label>
+                                <div class="profile-upload-container">
+                                    <div class="profile-preview" id="profilePreview">
+                                        <i class="bi bi-person-circle default-avatar"></i>
+                                        <span class="preview-text">No image selected</span>
+                                    </div>
+                                    <div class="upload-controls">
+                                        <input type="file" id="profilePicture" name="profilePicture"
+                                               accept="image/*" class="file-input"
+                                               onchange="previewImage(this)" />
+                                        <label for="profilePicture" class="upload-btn">
+                                            <i class="bi bi-cloud-arrow-up"></i>
+                                            Choose Image
+                                        </label>
+                                        <button type="button" class="remove-btn" onclick="removeImage()" style="display: none;">
+                                            <i class="bi bi-trash"></i>
+                                            Remove
+                                        </button>
+                                    </div>
+                                    <div class="upload-info">
+                                        <small>Recommended: Square image, 400x400px, max 2MB</small>
+                                    </div>
+                                    <span class="field-error" id="profilePictureError" style="display: none;"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" asp-for="Name">
+                                    <i class="bi bi-person-circle"></i>
+                                    Candidate Name *
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="bi bi-person input-icon"></i>
+                                    <input asp-for="Name" class="form-input" placeholder="Enter candidate full name" required />
+                                </div>
+                                <span asp-validation-for="Name" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" asp-for="Position">
+                                    <i class="bi bi-house-door"></i>
+                                    Position *
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="bi bi-briefcase input-icon"></i>
+                                    <input asp-for="Position" class="form-input" placeholder="Enter position title" required />
+                                </div>
+                                <span asp-validation-for="Position" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" asp-for="PartyList">
+                                    <i class="bi bi-people"></i>
+                                    Party List *
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="bi bi-flag input-icon"></i>
+                                    <input asp-for="PartyList" class="form-input" placeholder="Enter party or group affiliation" />
+                                </div>
+                                <span asp-validation-for="PartyList" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" asp-for="Description">
+                                    <i class="bi bi-chat-text"></i>
+                                    Description *
+                                </label>
+                                <textarea asp-for="Description" class="form-input form-textarea"
+                                          placeholder="Describe the candidate's qualifications, vision, or platform..."
+                                          maxlength="500"></textarea>
+                                <div class="char-counter" id="charCounter">0/500 characters</div>
+                                <span asp-validation-for="Description" class="field-error"></span>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Add Candidate
+                                </button>
+                                <a href="/Admin/Dashboard" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i>
+                                    Back to Dashboard
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Alert System
+        function showGlobalAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('globalAlert');
+            const alertId = 'alert-' + Date.now();
+
+            const icons = {
+                success: 'bi-check-circle',
+                error: 'bi-exclamation-circle',
+                warning: 'bi-exclamation-triangle',
+                info: 'bi-info-circle'
+            };
+
+            const alertHTML = `
+                <div id="${alertId}" class="global-alert ${type}">
+                    <i class="bi ${icons[type] || 'bi-info-circle'} alert-icon"></i>
+                    <div class="alert-content">${message}</div>
+                    <button class="alert-close" onclick="closeAlert('${alertId}')">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+
+            alertContainer.innerHTML = alertHTML;
+
+            // Show alert
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.classList.add('show');
+                }
+            }, 100);
+
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                closeAlert(alertId);
+            }, 5000);
+        }
+
+        function closeAlert(alertId) {
+            const alertElement = document.getElementById(alertId);
+            if (alertElement) {
+                alertElement.classList.remove('show');
+                setTimeout(() => {
+                    if (alertElement.parentElement) {
+                        alertElement.remove();
+                    }
+                }, 400);
+            }
+        }
+
+        // Form Validation
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFormValidation();
+            clearInitialServerErrors(); // Clear any initial server errors on page load
+            setupRealTimeValidation();
+        });
+
+        function initializeFormValidation() {
+            const form = document.getElementById('createForm');
+
+            // Form submission validation
+            form.addEventListener('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    showGlobalAlert('Please fix the validation errors before submitting.', 'error');
+                    scrollToFirstError();
+                }
+            });
+        }
+
+        function clearInitialServerErrors() {
+            // Clear all error states on page load - only show errors after user interaction
+            const allInputs = document.querySelectorAll('.form-input');
+            const allErrorSpans = document.querySelectorAll('.field-error');
+
+            allInputs.forEach(input => {
+                input.classList.remove('input-error');
+            });
+
+            allErrorSpans.forEach(span => {
+                span.style.display = 'none';
+                span.textContent = '';
+            });
+
+         
+            const validationSummary = document.querySelector('.validation-summary');
+            if (validationSummary) {
+                const errors = validationSummary.querySelector('div[asp-validation-summary="All"]');
+                if (errors && errors.children.length === 0) {
+                    validationSummary.style.display = 'none';
+                }
+            }
+        }
+
+        function setupRealTimeValidation() {
+          
+            const formInputs = document.querySelectorAll('.form-input');
+
+            formInputs.forEach(input => {
+           
+                input.addEventListener('input', function() {
+                    clearFieldError(this);
+
+                   
+                    if (this.hasAttribute('required')) {
+                        validateFieldRealTime(this);
+                    }
+                });
+
+            
+                input.addEventListener('blur', function() {
+                    if (this.hasAttribute('required')) {
+                        validateFieldRealTime(this);
+                    }
+                });
+
+                if (this.value === '' && this.placeholder) {
+                    this.classList.remove('input-error');
+                }
+            });
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = document.querySelectorAll('.form-input[required]');
+
+            requiredFields.forEach(field => {
+                if (!validateFieldRealTime(field)) {
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+
+        function validateFieldRealTime(field) {
+            const value = field.value.trim();
+            const errorElement = getErrorElement(field);
+
+            // Don't validate empty fields until user has interacted with them
+            if (!value && !field.dataset.interacted) {
+                return true; // Don't show error for untouched empty fields
+            }
+
+            if (!value) {
+                showFieldError(field, `${getFieldDisplayName(field)} is required`);
+                return false;
+            }
+
+            // Additional validation for specific fields
+            if (field.name === 'Name' && value.length < 2) {
+                showFieldError(field, 'Candidate name must be at least 2 characters long');
+                return false;
+            }
+
+            if (field.name === 'Position' && value.length < 2) {
+                showFieldError(field, 'Position must be at least 2 characters long');
+                return false;
+            }
+
+            // Clear any errors if field is valid
+            clearFieldError(field);
+            return true;
+        }
+
+        function showFieldError(field, message) {
+            // Mark field as interacted
+            field.dataset.interacted = 'true';
+
+            // Add error styling to input
+            field.classList.add('input-error');
+
+            // Show error message
+            const errorElement = getErrorElement(field);
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        function clearFieldError(field) {
+            // Remove error styling
+            field.classList.remove('input-error');
+
+            // Hide error message
+            const errorElement = getErrorElement(field);
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function getErrorElement(field) {
+            // Try to find the error element next to the input
+            const parentFormGroup = field.closest('.form-group');
+            if (parentFormGroup) {
+                const errorElement = parentFormGroup.querySelector('.field-error');
+                if (errorElement) {
+                    return errorElement;
+                }
+            }
+
+            // Fallback: try to find by ID
+            return document.getElementById(field.name + 'Error');
+        }
+
+        function getFieldDisplayName(field) {
+            const names = {
+                'Name': 'Candidate name',
+                'Position': 'Position',
+                'PartyList': 'Party list',
+                'Description': 'Description',
+                'profilePicture': 'Profile picture'
+            };
+            return names[field.name] || field.name;
+        }
+
+        function scrollToFirstError() {
+            const firstError = document.querySelector('.input-error');
+            if (firstError) {
+                firstError.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                firstError.focus();
+            }
+        }
+
+        // Character counter
+        const descriptionTextarea = document.querySelector('textarea[name="Description"]');
+        const charCounter = document.getElementById('charCounter');
+
+        if (descriptionTextarea && charCounter) {
+            function updateCharCount() {
+                const length = descriptionTextarea.value.length;
+                charCounter.textContent = `${length}/500 characters`;
+
+                if (length > 450) {
+                    charCounter.className = 'char-counter danger';
+                } else if (length > 400) {
+                    charCounter.className = 'char-counter warning';
+                } else {
+                    charCounter.className = 'char-counter';
+                }
+            }
+
+            descriptionTextarea.addEventListener('input', updateCharCount);
+            updateCharCount();
+        }
+
+        // Profile picture handling
+        function previewImage(input) {
+            const preview = document.getElementById('profilePreview');
+            const removeBtn = document.querySelector('.remove-btn');
+            const errorElement = document.getElementById('profilePictureError');
+            const file = input.files[0];
+
+            // Clear previous errors
+            if (errorElement) {
+                errorElement.style.display = 'none';
+                errorElement.textContent = '';
+            }
+
+            if (file) {
+                // Validate file size
+                if (file.size > 2 * 1024 * 1024) {
+                    showGlobalAlert('File size must be less than 2MB', 'error');
+                    if (errorElement) {
+                        errorElement.textContent = 'File size must be less than 2MB';
+                        errorElement.style.display = 'block';
+                    }
+                    input.value = '';
+                    return;
+                }
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    showGlobalAlert('Please select an image file (JPG, PNG, GIF)', 'error');
+                    if (errorElement) {
+                        errorElement.textContent = 'Please select an image file';
+                        errorElement.style.display = 'block';
+                    }
+                    input.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="profile-image">`;
+                    preview.classList.add('has-image');
+                    removeBtn.style.display = 'block';
+                    showGlobalAlert('Profile picture selected successfully', 'success');
+                }
+                reader.onerror = function() {
+                    showGlobalAlert('Error reading the image file', 'error');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage() {
+            const input = document.getElementById('profilePicture');
+            const preview = document.getElementById('profilePreview');
+            const removeBtn = document.querySelector('.remove-btn');
+            const errorElement = document.getElementById('profilePictureError');
+
+            input.value = '';
+            preview.innerHTML = '<i class="bi bi-person-circle default-avatar"></i><span class="preview-text">No image selected</span>';
+            preview.classList.remove('has-image');
+            removeBtn.style.display = 'none';
+
+            if (errorElement) {
+                errorElement.style.display = 'none';
+                errorElement.textContent = '';
+            }
+
+            showGlobalAlert('Profile picture removed', 'info');
+        }
+
+        // Input effects - only for visual enhancement, not validation
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                if (!this.classList.contains('input-error')) {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 12px rgba(126, 87, 194, 0.15)';
+                }
+            });
+
+            input.addEventListener('blur', function() {
+                if (!this.classList.contains('input-error')) {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                }
+            });
+
+            // Mark field as interacted when user focuses on it
+            input.addEventListener('focus', function() {
+                this.dataset.interacted = 'true';
+            });
+        });
+    </script>
+</body>
+</html>
+
 <style>
-    body {
-        font-family: 'Poppins', sans-serif;
-        background: #f3f3f3;
-        margin: 0;
-        padding: 0;
+    :root {
+        --primary: #7e57c2;
+        --primary-dark: #5e35b1;
+        --primary-light: #b388ff;
+        --secondary: #42a5f5;
+        --success: #66bb6a;
+        --warning: #ffa726;
+        --danger: #ef5350;
+        --info: #29b6f6;
+        --dark: #37474f;
+        --light: #f8f9fa;
+        --white: #ffffff;
+        --gray: #6c757d;
+        --border: #e0e0e0;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
 
-    .header {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        min-height: 100vh;
+        color: #333;
+        line-height: 1.6;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .bg-shape {
+        position: fixed;
+        border-radius: 50%;
+        opacity: 0.1;
+        z-index: 0;
+        animation: float 8s infinite ease-in-out;
+    }
+
+    .shape1 {
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(45deg, var(--primary), var(--primary-light));
+        top: 10%;
+        left: 5%;
+    }
+
+    .shape2 {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(45deg, var(--success), #81c784);
+        bottom: 20%;
+        right: 10%;
+        animation-delay: 2s;
+    }
+
+    .shape3 {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(45deg, var(--info), #64b5f6);
+        top: 50%;
+        left: 80%;
+        animation-delay: 4s;
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+        }
+    }
+
+    .admin-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        padding: 1.5rem 2rem;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        z-index: 100;
+    }
+
+    .header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px 40px;
-        background: #7e57c2;
-        color: white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        flex-wrap: wrap;
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
-        .header h2 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-    .logout-button {
-        background: #fff;
-        color: #7e57c2;
-        border: none;
-        padding: 10px 20px;
-        font-weight: 600;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-        .logout-button:hover {
-            background: #e0d1f5;
-            transform: translateY(-2px);
-        }
-
-    .container {
-        max-width: 800px;
-        margin: 30px auto;
-        padding: 0 20px;
-    }
-
-    /* Form Container */
-    .form-container {
-        background: #fff;
-        padding: 40px;
-        border-radius: 18px;
-        box-shadow: 0 12px 35px rgba(0,0,0,0.1);
-        position: relative;
-        overflow: hidden;
-    }
-
-        .form-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #7e57c2, #b388ff);
-            border-radius: 18px 18px 0 0;
-        }
-
-    .form-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-
-        .form-header h2 {
-            font-size: 2.2em;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            background: linear-gradient(135deg, #7e57c2, #b388ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-    .form-subtitle {
-        color: #666;
-        font-size: 1.1em;
-        margin: 0;
-    }
-
-    /* Form Groups */
-    .form-group {
-        margin-bottom: 30px;
-        position: relative;
-    }
-
-    .floating-label {
-        position: relative;
-    }
-
-        .floating-label input,
-        .floating-label textarea {
-            width: 100%;
-            padding: 20px;
-            border: 2px solid #e1e1e1;
-            border-radius: 12px;
-            font-size: 16px;
-            background: white;
-            transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .floating-label textarea {
-            min-height: 120px;
-            padding-right: 20px;
-        }
-
-            .floating-label input:focus,
-            .floating-label textarea:focus {
-                outline: none;
-                border-color: #7e57c2;
-                box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
-                transform: translateY(-2px);
-            }
-
-        .floating-label label {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 16px;
-            color: #999;
-            pointer-events: none;
-            transition: all 0.3s ease;
-            background: white;
-            padding: 0 8px;
-            margin-left: -8px;
-        }
-
-        .floating-label.focused label,
-        .floating-label.has-value label {
-            top: -10px;
-            left: 15px;
-            font-size: 12px;
-            color: #7e57c2;
-            font-weight: 600;
-        }
-
-    .input-icon {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 20px;
-        opacity: 0.5;
-        transition: all 0.3s ease;
-    }
-
-    .floating-label.focused .input-icon {
-        opacity: 1;
-        transform: translateY(-50%) scale(1.1);
-    }
-
-    /* Character Counter */
-    .char-counter {
-        position: absolute;
-        bottom: -20px;
-        right: 0;
-        font-size: 12px;
-        color: #999;
-        transition: color 0.3s ease;
-    }
-
-    /* Button Container */
-    .button-container {
+    .header-title {
         display: flex;
-        gap: 15px;
-        margin-top: 40px;
+        align-items: center;
+        gap: 1rem;
     }
 
-    .btn {
-        flex: 1;
-        padding: 18px 24px;
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+    .admin-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    .logout-btn {
+        background: var(--white);
+        color: var(--primary);
         border: none;
-        border-radius: 12px;
-        font-size: 16px;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 10px;
-        text-decoration: none;
-        text-align: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow);
     }
 
-    .btn-primary {
-        background: linear-gradient(135deg, #7e57c2, #9575cd);
-        color: white;
-        box-shadow: 0 8px 25px rgba(126, 87, 194, 0.3);
-    }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(126, 87, 194, 0.4);
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: #f0f0f0;
         }
 
-    .btn-secondary {
-        background: rgba(255, 255, 255, 0.8);
-        color: #666;
-        border: 2px solid #e1e1e1;
+    .create-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        position: relative;
+        z-index: 10;
     }
 
-        .btn-secondary:hover {
-            background: white;
-            border-color: #7e57c2;
-            color: #7e57c2;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-    .btn-icon {
-        font-size: 18px;
+    .create-card {
+        background: var(--white);
+        border-radius: 20px;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        margin: 0 auto;
+        animation: slideUp 0.6s ease;
     }
 
-    /* Validation Styles */
-    .field-validation-error {
-        color: #ff6b6b;
-        font-size: 12px;
-        margin-top: 5px;
-        display: block;
-    }
-
-    .input-validation-error {
-        border-color: #ff6b6b !important;
-    }
-
-    /* Stats Preview */
-    .stats-preview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-bottom: 30px;
-        padding: 20px;
-        background: linear-gradient(135deg, #f3e5f5, #ede7f6);
-        border-radius: 12px;
-        border-left: 4px solid #7e57c2;
-    }
-
-    .stat-item {
-        text-align: center;
-    }
-
-    .stat-value {
-        font-size: 1.8em;
-        font-weight: 700;
-        color: #7e57c2;
-        display: block;
-    }
-
-    .stat-label {
-        font-size: 0.9em;
-        color: #666;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Responsive Design */
-    @@media (max-width: 768px) {
-        .header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .logout-button {
-            margin-top: 10px;
-        }
-
-        .container {
-            padding: 0 15px;
-        }
-
-        .form-container {
-            padding: 30px 20px;
-        }
-
-        .button-container {
-            flex-direction: column;
-        }
-
-        .btn {
-            width: 100%;
-        }
-
-        .stats-preview {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    /* Animation */
-    @@keyframes fadeIn {
+    @@keyframes slideUp {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
         }
 
         to {
@@ -314,150 +904,859 @@
         }
     }
 
-    .form-container {
-        animation: fadeIn 0.6s ease;
+    .card-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+        }
+
+    .card-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-subtitle {
+        opacity: 0.9;
+        margin-top: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-content {
+        padding: 2.5rem;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 2.5rem;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--dark);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+    .reference-section {
+        background: var(--light);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 4px solid var(--primary);
+        height: fit-content;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--white);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        transition: transform 0.3s ease;
+    }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+    .stat-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-desc {
+        font-size: 0.8rem;
+        color: var(--gray);
+    }
+
+    .form-tips {
+        background: var(--white);
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--info);
+    }
+
+        .form-tips h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-tips ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .form-tips li {
+            margin-bottom: 0.25rem;
+        }
+
+    .requirements-checklist {
+        background: var(--white);
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--success);
+    }
+
+        .requirements-checklist h4 {
+            margin: 0 0 0.75rem 0;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+    .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--gray);
+    }
+
+    .requirement-check {
+        color: var(--success);
+        font-size: 0.9rem;
+    }
+
+    .create-form-section {
+        padding: 0;
     }
 
     .form-group {
-        animation: fadeIn 0.6s ease forwards;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 0.95rem;
+    }
+
+        .form-label i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+    .form-input {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--light);
+        font-family: inherit;
+    }
+
+        .form-input.input-error {
+            border-color: #f44336 !important;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
+        }
+
+        .form-input:not(.input-error):focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1) !important;
+        }
+
+    .field-error:empty {
+        display: none !important;
+    }
+
+    .field-error {
+        transition: all 0.3s ease;
+    }
+
+    .form-input.valid {
+        border-color: var(--success) !important;
+    }
+
+ 
+    .form-input:not([required]) + .field-error {
+        display: none !important;
+    }
+        .form-input:focus {
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
+            outline: none;
+            transform: translateY(-1px);
+        }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.5;
+    }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray);
+        font-size: 1.1rem;
+    }
+
+    .input-with-icon .form-input {
+        padding-left: 3rem;
+    }
+
+    .char-counter {
+        text-align: right;
+        font-size: 0.8rem;
+        color: var(--gray);
+        margin-top: 0.5rem;
+        transition: color 0.3s ease;
+    }
+
+        .char-counter.warning {
+            color: var(--warning);
+        }
+
+        .char-counter.danger {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        flex: 1;
+        justify-content: center;
+        min-width: 140px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: var(--shadow);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--primary-dark), #4a148c);
+        }
+
+    .btn-secondary {
+        background: var(--light);
+        color: var(--dark);
+        border: 2px solid var(--border);
+    }
+
+        .btn-secondary:hover {
+            background: var(--white);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-light);
+        }
+
+ 
+    .profile-upload-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .profile-preview {
+        width: 150px;
+        height: 150px;
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--light);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .profile-preview.has-image {
+            border-style: solid;
+            border-color: var(--primary);
+        }
+
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .default-avatar {
+        font-size: 3rem;
+        color: var(--gray);
+        margin-bottom: 0.5rem;
+    }
+
+    .preview-text {
+        font-size: 0.8rem;
+        color: var(--gray);
+        text-align: center;
+    }
+
+    .upload-controls {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .upload-btn {
+        background: var(--primary);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+        .upload-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+    .remove-btn {
+        background: var(--danger);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+        .remove-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-1px);
+        }
+
+    .upload-info {
+        color: var(--gray);
+        font-size: 0.8rem;
+    }
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+        position: relative;
+    }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--white);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+    @@keyframes spin {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 1000;
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateX(100%);
+        transition: all 0.3s ease;
     }
 
-        .form-group:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .form-group:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .form-group:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-    .button-container {
-        animation-delay: 0.4s;
+    .toast-success {
+        background: var(--success);
     }
-</style>
 
-<div class="header">
-    <h2>👑 Add Candidate</h2>
-    <form asp-controller="Account" asp-action="Logout" method="post">
-        <button type="submit" class="logout-button">🚪 Logout</button>
-    </form>
-</div>
+    .toast-error {
+        background: var(--danger);
+    }
 
-<div class="container">
-    <div class="form-container">
-        <div class="form-header">
-            <h2>Add New Candidate</h2>
-            <p class="form-subtitle">Create a new candidate for the election</p>
-        </div>
+    .toast-show {
+        opacity: 1;
+        transform: translateX(0);
+    }
 
-        <!-- Stats Preview -->
-        <div class="stats-preview">
-            <div class="stat-item">
-                <span class="stat-value">🎯</span>
-                <span class="stat-label">New Candidate</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">🏛️</span>
-                <span class="stat-label">Position</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">📝</span>
-                <span class="stat-label">Description</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">➕</span>
-                <span class="stat-label">Add to Ballot</span>
-            </div>
-        </div>
-
-        <form asp-action="Create" method="post">
-            <div class="form-group floating-label">
-                <input asp-for="Name" placeholder=" " required />
-                <label asp-for="Name">🎯 Candidate Name</label>
-                <div class="input-icon">👤</div>
-                <span asp-validation-for="Name" class="field-validation-error"></span>
-            </div>
-
-            <div class="form-group floating-label">
-                <input asp-for="Position" placeholder=" " required />
-                <label asp-for="Position">💼 Position</label>
-                <div class="input-icon">🏛️</div>
-                <span asp-validation-for="Position" class="field-validation-error"></span>
-            </div>
-
-            <div class="form-group floating-label">
-                <textarea asp-for="Description" placeholder=" " maxlength="500"></textarea>
-                <label asp-for="Description">📝 Description</label>
-                <div class="char-counter" id="charCounter">0/500 characters</div>
-                <span asp-validation-for="Description" class="field-validation-error"></span>
-            </div>
-
-            <div class="button-container">
-                <button type="submit" class="btn btn-primary">
-                    <span class="btn-icon">➕</span>
-                    Add Candidate
-                </button>
-                <a href="/Admin/Dashboard" class="btn btn-secondary">
-                    <span class="btn-icon">←</span>
-                    Back to Dashboard
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-
-        const descriptionTextarea = document.querySelector('textarea[name="Description"]');
-        const charCounter = document.getElementById('charCounter');
-
-        if (descriptionTextarea && charCounter) {
-            descriptionTextarea.addEventListener('input', function() {
-                const length = this.value.length;
-                charCounter.textContent = `${length}/500 characters`;
-
-                if (length > 450) {
-                    charCounter.style.color = '#ff6b6b';
-                } else if (length > 400) {
-                    charCounter.style.color = '#ffa726';
-                } else {
-                    charCounter.style.color = '#999';
-                }
-            });
-
-         
-            charCounter.textContent = `${descriptionTextarea.value.length}/500 characters`;
+    @@media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
         }
 
-       
-        document.querySelectorAll('.floating-label input, .floating-label textarea').forEach(input => {
-           
-            if (input.value) {
-                input.parentElement.classList.add('has-value');
+        .reference-section {
+            order: 2;
+        }
+
+        .create-form-section {
+            order: 1;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .admin-header {
+            padding: 1rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .create-container {
+            padding: 0 1rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            flex: none;
+        }
+
+        .profile-upload-container {
+            align-items: center;
+            text-align: center;
+        }
+
+        .upload-controls {
+            justify-content: center;
+        }
+
+        .profile-preview {
+            width: 120px;
+            height: 120px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .card-header {
+            padding: 1.5rem;
+        }
+
+            .card-header h2 {
+                font-size: 1.5rem;
             }
 
-            input.addEventListener('focus', function() {
-                this.parentElement.classList.add('focused');
-            });
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
 
-            input.addEventListener('blur', function() {
-                if (!this.value) {
-                    this.parentElement.classList.remove('focused');
-                }
-                this.parentElement.classList.toggle('has-value', !!this.value);
-            });
-        });
+        .form-input {
+            padding: 0.875rem 1rem;
+        }
 
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<span class="btn-icon">⏳</span> Adding Candidate...';
-            submitBtn.disabled = true;
-        });
-    </script>
-}
+        .stat-item {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    .candidate-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1rem;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .candidate-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .candidate-avatar-initials {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .candidate-details {
+        flex: 1;
+        min-width: 0; 
+    }
+
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 400px;
+    }
+
+    .toast {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid var(--info);
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        gap: 12px;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        min-width: 300px;
+    }
+
+    .toast-show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .toast-success {
+        border-left-color: var(--success);
+    }
+
+    .toast-error {
+        border-left-color: var(--danger);
+    }
+
+    .toast-warning {
+        border-left-color: var(--warning);
+    }
+
+    .toast-info {
+        border-left-color: var(--info);
+    }
+
+    .toast-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+        .toast-content i {
+            font-size: 1.2rem;
+        }
+
+    .toast-success .toast-content i {
+        color: var(--success);
+    }
+
+    .toast-error .toast-content i {
+        color: var(--danger);
+    }
+
+    .toast-warning .toast-content i {
+        color: var(--warning);
+    }
+
+    .toast-info .toast-content i {
+        color: var(--info);
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: var(--gray);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+        .toast-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--dark);
+        }
+
+    /* Validation Styles */
+    .validation-summary {
+        background: #fff3f3;
+        border: 1px solid #ffcdd2;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .validation-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        color: var(--danger);
+    }
+
+        .validation-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+    .validation-errors {
+        color: var(--danger);
+        font-size: 0.9rem;
+    }
+
+        .validation-errors ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .validation-errors li {
+            margin-bottom: 0.5rem;
+        }
+
+    .validation-message {
+        display: block;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: #ffebee;
+        color: var(--danger);
+        border-radius: 4px;
+        border-left: 3px solid var(--danger);
+    }
+
+    .field-validation-error {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--danger);
+        margin-top: 0.5rem;
+    }
+
+    /* Alert Styles */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: #2e7d32;
+        border-left-color: var(--success);
+        color: white;
+    }
+
+    .alert-danger {
+        background: #c62828;
+        border-left-color: var(--danger);
+        color: white;
+    }
+
+    .alert i {
+        font-size: 1.2rem;
+    }
+
+    .form-label[asp-for]::after {
+        content: " *";
+        color: var(--danger);
+    }
+
+    .form-label:not([asp-for])::after {
+        content: "";
+    }
+
+    .form-input:invalid {
+        border-color: var(--danger);
+    }
+
+        .form-input:invalid:focus {
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+        }
+
+    /* Loading state for submit button */
+    .btn.loading {
+        position: relative;
+        color: transparent;
+    }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+    /* Ensure clean initial state for form fields */
+    .form-input {
+        border-color: var(--border) !important;
+        box-shadow: none !important;
+    }
+
+        .form-input:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1) !important;
+        }
+
+    /* Hide all error messages by default */
+    .field-error {
+        display: none !important;
+    }
+
+        /* Only show error messages when they have content and field is invalid */
+        .field-error:not(:empty) {
+            display: block !important;
+        }
+
+    /* Remove any initial red styling from placeholders */
+    .form-input::placeholder {
+        color: var(--gray) !important;
+        opacity: 0.7 !important;
+    }
+
+    .form-input.input-error::placeholder {
+        color: var(--gray) !important;
+        opacity: 0.7 !important;
+    }
+
+    /* Validation summary should only show when there are actual errors */
+    .validation-summary:empty {
+        display: none !important;
+    }
+
+    .validation-summary div[asp-validation-summary="All"]:empty {
+        display: none !important;
+    }
+
+</style>

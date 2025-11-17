@@ -1,0 +1,1316 @@
+﻿@model List<Election>
+@{
+    ViewBag.Title = "Election History";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Election History - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    <div class="bg-shape shape1"></div>
+    <div class="bg-shape shape2"></div>
+    <div class="bg-shape shape3"></div>
+
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1><i class="bi bi-shield-check"></i> Election Administration</h1>
+                <div class="admin-badge">Election History & Results</div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="dashboard-container">
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-circle"></i>
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- Statistics Overview -->
+        @if (Model.Any())
+        {
+            var totalElections = Model.Count;
+            var totalVotes = Model.Sum(e => e.Candidates.Sum(c => c.VoteCount));
+            var totalCandidates = Model.Sum(e => e.Candidates.Count);
+
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-number">@totalElections</div>
+                    <div class="stat-label">Total Elections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@totalVotes</div>
+                    <div class="stat-label">Total Votes Cast</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@totalCandidates</div>
+                    <div class="stat-label">Total Candidates</div>
+                </div>
+                <div class="stat-card highlight">
+                    <div class="stat-number">@Model.Count(e => e.IsCompleted)</div>
+                    <div class="stat-label">Completed Elections</div>
+                </div>
+            </div>
+        }
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                Election History & Results
+            </h1>
+            <div class="header-actions">
+                <a href="@Url.Action("ElectionManagement")" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Elections
+                </a>
+                <a href="@Url.Action("Dashboard")" class="btn btn-outline-primary">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Elections History Grid -->
+        <div class="elections-history">
+            @foreach (var election in Model.OrderByDescending(e => e.EndDate))
+            {
+                var totalVotes = election.Candidates.Sum(c => c.VoteCount);
+                var isHighTurnout = totalVotes > 50;
+
+                var positions = election.Candidates
+                .Select(c => c.Position)
+                .Distinct()
+                .OrderBy(p => p)
+                .ToList();
+
+                <div class="election-history-card @(isHighTurnout ? "winner-highlight" : "")">
+                    <div class="election-header">
+                        <h3>@election.Name</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="status-badge completed">
+                                <i class="bi bi-check-circle"></i>
+                                Completed
+                            </span>
+                            @if (isHighTurnout)
+                            {
+                                <span class="status-badge high-turnout">
+                                    <i class="bi bi-trophy"></i>
+                                    High Turnout
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <p class="election-description">@election.Description</p>
+
+                    <div class="election-dates">
+                        <div class="date-item">
+                            <i class="bi bi-play-circle"></i>
+                            <strong>Start:</strong> @election.StartDate.ToString("MMM dd, yyyy")
+                        </div>
+                        <div class="date-item">
+                            <i class="bi bi-stop-circle"></i>
+                            <strong>End:</strong> @election.EndDate.ToString("MMM dd, yyyy")
+                        </div>
+                        <div class="date-item">
+                            <i class="bi bi-clock"></i>
+                            <strong>Duration:</strong> @((election.EndDate - election.StartDate).Days) days
+                        </div>
+                    </div>
+
+                    <div class="election-stats">
+                        <div class="stat @(isHighTurnout ? "highlight" : "")">
+                            <i class="bi bi-people"></i>
+                            <span>@election.Candidates.Count candidates</span>
+                        </div>
+                        <div class="stat @(isHighTurnout ? "highlight" : "")">
+                            <i class="bi bi-check-square"></i>
+                            <span>@totalVotes total votes</span>
+                        </div>
+                        <div class="stat">
+                            <i class="bi bi-layers"></i>
+                            <span>@positions.Count positions</span>
+                        </div>
+                    </div>
+
+                    <!-- Position-based Results Section -->
+                    <div class="results-section">
+                        <div class="results-header">
+                            <h4><i class="bi bi-trophy"></i> Results by Position</h4>
+                        </div>
+
+                        @if (election.Candidates.Any())
+                        {
+                            @foreach (var position in positions)
+                            {
+                                var positionCandidates = election.Candidates
+                                .Where(c => c.Position == position)
+                                .OrderByDescending(c => c.VoteCount)
+                                .ToList();
+
+                                var positionVotes = positionCandidates.Sum(c => c.VoteCount);
+                                var winner = positionCandidates.FirstOrDefault();
+                                var maxVotes = winner?.VoteCount ?? 0;
+
+                                <div class="position-group">
+                                    <div class="position-header">
+                                        <div class="position-title">
+                                            <i class="bi bi-person-circle"></i>
+                                            @position
+                                        </div>
+                                        <div class="position-stats">
+                                            <span>@positionCandidates.Count candidates</span>
+                                            <span>•</span>
+                                            <span>@positionVotes total votes</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="candidates-list">
+                                        @foreach (var candidate in positionCandidates)
+                                        {
+                                            var candidateVotes = candidate.VoteCount;
+                                            var percentage = positionVotes > 0 ? (candidateVotes * 100.0) / positionVotes : 0;
+                                            var isWinner = candidate.VoteCount == maxVotes && maxVotes > 0 && positionCandidates.Count(c => c.VoteCount == maxVotes) == 1;
+                                            var initials = candidate.Name.Split(' ').Length > 1
+                                            ? $"{candidate.Name.Split(' ')[0][0]}{candidate.Name.Split(' ')[1][0]}"
+                                            : candidate.Name.Substring(0, Math.Min(2, candidate.Name.Length)).ToUpper();
+
+                                            <div class="candidate-item @(isWinner ? "winner position-winner" : "")">
+                                                <div class="candidate-info">
+                                                    <div class="candidate-avatar">
+                                                        @if (!string.IsNullOrEmpty(candidate.ProfilePicture) && candidate.ProfilePicture != "/images/default-avatar.png")
+                                                        {
+                                                            <img src="@candidate.ProfilePicture" alt="@candidate.Name" class="candidate-avatar-img" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="candidate-avatar-initials">@initials</div>
+                                                        }
+                                                    </div>
+                                                    <div class="candidate-details">
+                                                        <div class="candidate-name">
+                                                            @candidate.Name
+                                                            @if (isWinner)
+                                                            {
+                                                                <span class="winner-badge">WINNER</span>
+                                                            }
+                                                            @if (maxVotes > 0 && candidate.VoteCount == maxVotes && positionCandidates.Count(c => c.VoteCount == maxVotes) > 1)
+                                                            {
+                                                                <span class="tie-badge">TIE</span>
+                                                            }
+                                                        </div>
+                                                        @if (!string.IsNullOrEmpty(candidate.PartyList) && candidate.PartyList != "Independent")
+                                                        {
+                                                            <div class="candidate-party">
+                                                                @candidate.PartyList
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="candidate-votes">
+                                                    <div class="vote-display">
+                                                        <span class="vote-count">@candidate.VoteCount votes</span>
+                                                        <span class="vote-percentage">@percentage.ToString("0.0")%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="vote-progress-container">
+                                                <div class="vote-progress-info">
+                                                    <span class="vote-progress-label">Vote Share</span>
+                                                    <span class="vote-progress-percentage">@percentage.ToString("0.0")%</span>
+                                                </div>
+                                                <div class="vote-progress">
+                                                    <div class="vote-progress-bar" style="width: @percentage%"></div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="no-results">
+                                <i class="bi bi-graph-up"></i>
+                                <p>No candidates participated in this election.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="election-actions">
+                        <a href="@Url.Action("DownloadElectionReport", new { electionId = election.Id })"
+                           class="btn btn-success btn-sm">
+                            <i class="bi bi-file-pdf"></i> Download PDF
+                        </a>
+                        <button onclick="shareResults(@election.Id)" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-share"></i> Share Results
+                        </button>
+                    </div>
+                </div>
+            }
+
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h3>No Election History Yet</h3>
+                    <p>Completed elections will appear here with detailed results organized by position.</p>
+                    <p class="text-muted">Start and complete elections to build your historical data.</p>
+                    <a href="@Url.Action("ElectionManagement")" class="btn btn-primary">
+                        <i class="bi bi-calendar-event"></i> Manage Active Elections
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+
+    <script>
+      
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = message;
+                toast.className = `toast toast-${type} toast-show`;
+
+                setTimeout(() => {
+                    toast.classList.remove('toast-show');
+                }, 3000);
+            }
+        }
+
+        // Share results function
+        function shareResults(electionId) {
+            const url = `${window.location.origin}/Admin/ElectionResults?electionId=${electionId}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Election Results',
+                    text: 'Check out these election results!',
+                    url: url
+                })
+                .then(() => showToast('Results shared successfully!', 'success'))
+                .catch(() => showToast('Share cancelled', 'error'));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(url)
+                    .then(() => showToast('Results link copied to clipboard!', 'success'))
+                    .catch(() => showToast('Failed to copy link', 'error'));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.election-history-card');
+            const positionGroups = document.querySelectorAll('.position-group');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.6s ease';
+                observer.observe(card);
+            });
+
+            positionGroups.forEach((group, index) => {
+                group.style.opacity = '0';
+                group.style.transform = 'translateX(-20px)';
+                group.style.transition = `all 0.6s ease ${index * 0.1}s`;
+                observer.observe(group);
+            });
+
+            const candidateItems = document.querySelectorAll('.candidate-item');
+            candidateItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    if (!this.classList.contains('winner')) {
+                        this.style.transform = 'translateX(5px)';
+                    }
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    if (!this.classList.contains('winner')) {
+                        this.style.transform = 'translateX(0)';
+                    }
+                });
+            });
+        });
+
+        function getAntiForgeryToken() {
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            return tokenElement ? tokenElement.value : '';
+        }
+    </script>
+</body>
+</html>
+<style>
+    :root {
+        --primary: #7e57c2;
+        --primary-dark: #5e35b1;
+        --primary-light: #b388ff;
+        --secondary: #42a5f5;
+        --success: #66bb6a;
+        --warning: #ffa726;
+        --danger: #ef5350;
+        --info: #29b6f6;
+        --dark: #37474f;
+        --light: #f8f9fa;
+        --white: #ffffff;
+        --gray: #6c757d;
+        --border: #e0e0e0;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        min-height: 100vh;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .bg-shape {
+        position: fixed;
+        border-radius: 50%;
+        opacity: 0.1;
+        z-index: 0;
+        animation: float 8s infinite ease-in-out;
+    }
+
+    .shape1 {
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(45deg, var(--primary), var(--primary-light));
+        top: 10%;
+        left: 5%;
+    }
+
+    .shape2 {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(45deg, var(--success), #81c784);
+        bottom: 20%;
+        right: 10%;
+        animation-delay: 2s;
+    }
+
+    .shape3 {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(45deg, var(--info), #64b5f6);
+        top: 50%;
+        left: 80%;
+        animation-delay: 4s;
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+        }
+    }
+
+    .admin-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        padding: 1.5rem 2rem;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        z-index: 100;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+    .admin-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    .logout-btn {
+        background: var(--white);
+        color: var(--primary);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow);
+    }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: #f0f0f0;
+        }
+
+    .admin-nav {
+        background: var(--white);
+        padding: 1rem 2rem;
+        box-shadow: var(--shadow);
+        position: relative;
+        z-index: 90;
+    }
+
+    .nav-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--dark);
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+        .nav-link:hover {
+            background: var(--light);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .dashboard-title i {
+            color: var(--primary);
+        }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .btn {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: var(--shadow);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--primary-dark), #4a148c);
+        }
+
+    .btn-secondary {
+        background: var(--light);
+        color: var(--dark);
+        border: 2px solid var(--border);
+    }
+
+        .btn-secondary:hover {
+            background: var(--white);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-light);
+        }
+
+    .btn-info {
+        background: var(--info);
+        color: white;
+    }
+
+        .btn-info:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+        }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+    .btn-outline-primary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+    .btn-sm {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .elections-history {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+        gap: 2rem;
+    }
+
+    .election-history-card {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        border-left: 6px solid var(--info);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .election-history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .election-history-card.winner-highlight {
+            border-left-color: var(--success);
+            background: linear-gradient(135deg, var(--white) 0%, #f0f9ff 100%);
+        }
+
+    .election-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+        .election-header h3 {
+            margin: 0;
+            color: var(--dark);
+            font-size: 1.4rem;
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+        .status-badge.completed {
+            background: var(--info);
+            color: white;
+        }
+
+        .status-badge.high-turnout {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.low-turnout {
+            background: var(--warning);
+            color: white;
+        }
+
+    .election-description {
+        color: var(--gray);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    .election-dates {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .date-item {
+        font-size: 0.9rem;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .date-item i {
+            color: var(--primary);
+        }
+
+    .election-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--gray);
+        padding: 0.5rem 1rem;
+        background: var(--light);
+        border-radius: 8px;
+    }
+
+        .stat i {
+            color: var(--primary);
+        }
+
+        .stat.highlight {
+            background: var(--success);
+            color: white;
+        }
+
+            .stat.highlight i {
+                color: white;
+            }
+
+    /* Position-based Results Section */
+    .results-section {
+        margin: 1.5rem 0;
+    }
+
+    .results-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+        .results-header h4 {
+            margin: 0;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+
+    .position-group {
+        background: var(--light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--primary);
+        transition: all 0.3s ease;
+    }
+
+        .position-group:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+    .position-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .position-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .position-stats {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: var(--gray);
+    }
+
+    .candidates-list {
+        space-y: 0.75rem;
+    }
+
+    .candidate-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--white);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid var(--border);
+        transition: all 0.3s ease;
+    }
+
+        .candidate-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+        .candidate-item.winner {
+            border-left-color: var(--success);
+            background: linear-gradient(135deg, var(--white) 0%, #f0f9f0 100%);
+            box-shadow: var(--shadow);
+        }
+
+    .candidate-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .candidate-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1rem;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 2px solid var(--border);
+    }
+
+    .candidate-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .candidate-avatar-initials {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .candidate-item.winner .candidate-avatar {
+        border: 3px solid var(--success);
+        box-shadow: 0 0 0 2px rgba(102, 187, 106, 0.3);
+    }
+
+    .candidate-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .candidate-name {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .candidate-party {
+        font-size: 0.8rem;
+        color: var(--gray);
+        margin-bottom: 0.25rem;
+    }
+
+    .candidate-position {
+        font-size: 0.75rem;
+        color: var(--primary);
+        background: rgba(126, 87, 194, 0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        display: inline-block;
+    }
+
+    .candidate-item.winner .candidate-position {
+        background: rgba(102, 187, 106, 0.2);
+        color: var(--success);
+    }
+
+    .candidate-votes {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .vote-display {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+    }
+
+    .vote-count {
+        font-weight: 700;
+        color: var(--dark);
+        font-size: 1.1rem;
+    }
+
+    .vote-percentage {
+        background: var(--success);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 70px;
+        text-align: center;
+    }
+
+    .winner-badge {
+        background: linear-gradient(135deg, var(--success), #4caf50);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    /* Enhanced Vote Progress Container */
+    .vote-progress-container {
+        margin-top: 0.75rem;
+        padding: 0 0.5rem;
+    }
+
+    .vote-progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--gray);
+    }
+
+    .vote-progress-label {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .vote-progress-percentage {
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    .vote-progress {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .vote-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success), #4caf50);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+        position: relative;
+    }
+
+        .vote-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+    .candidate-item.winner .vote-progress-bar {
+        background: linear-gradient(90deg, var(--success), #45a049);
+    }
+
+    @@keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .position-winner {
+        background: linear-gradient(135deg, var(--white) 0%, #f8fff8 100%);
+        border: 2px solid var(--success);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray);
+    }
+
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+    .election-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray);
+        grid-column: 1 / -1;
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        color: var(--primary);
+    }
+
+    .empty-state h3 {
+        margin: 0 0 1rem 0;
+        color: var(--dark);
+        font-size: 1.5rem;
+    }
+
+    .empty-state p {
+        margin: 0 0 2rem 0;
+        font-size: 1.1rem;
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border-color: var(--success);
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border-color: var(--danger);
+    }
+
+    /* Statistics Overview */
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        text-align: center;
+        border-left: 4px solid var(--info);
+    }
+
+        .stat-card.highlight {
+            border-left-color: var(--success);
+            background: linear-gradient(135deg, var(--white) 0%, #f0f9ff 100%);
+        }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--gray);
+        font-size: 0.9rem;
+    }
+
+    /* Toast Notifications */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    }
+
+    .toast-success {
+        background: var(--success);
+    }
+
+    .toast-error {
+        background: var(--danger);
+    }
+
+    .toast-show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 1024px) {
+        .elections-history {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .admin-header, .admin-nav {
+            padding: 1rem;
+        }
+
+        .header-content, .nav-content {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .nav-links {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dashboard-container {
+            padding: 0 1rem;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .candidate-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .candidate-info {
+            width: 100%;
+        }
+
+        .candidate-votes {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .vote-display {
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .election-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .stats-overview {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .election-history-card {
+            padding: 1.5rem;
+        }
+
+        .election-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .election-dates, .election-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .position-group {
+            padding: 1rem;
+        }
+
+        .position-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .candidate-avatar {
+            width: 40px;
+            height: 40px;
+        }
+
+        .candidate-avatar-initials {
+            font-size: 1rem;
+        }
+
+        .vote-count {
+            font-size: 1rem;
+        }
+
+        .vote-percentage {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+        }
+    }
+</style>

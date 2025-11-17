@@ -76,6 +76,9 @@ namespace VotingSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+         
+            ModelState.Remove("Course");
+
             if (_context.Users.Any(u => u.Username == model.Username))
             {
                 ModelState.AddModelError("", "Username already exists");
@@ -87,9 +90,9 @@ namespace VotingSystem.Controllers
                 Username = model.Username,
                 PasswordHash = SecurityHelper.HashPassword(model.Password),
                 Email = model.Email,
-                Course = model.Course,
+                Course = model.Course, 
                 RequestedRole = model.RequestedRole,
-                Role = "Pending", // Set to Pending until approved
+                Role = "Pending", 
                 IsApproved = false,
                 CreatedAt = DateTime.Now
             };
